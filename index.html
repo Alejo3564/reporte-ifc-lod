@@ -1,6 +1,5 @@
 <!DOCTYPE html>
 <html lang="es">
-
 <head>
 
 <meta charset="UTF-8">
@@ -58,48 +57,70 @@ th, td {
 
 <script type="module">
 
+import * as THREE from "https://unpkg.com/three@0.152.2/build/three.module.js";
+
 import { IFCViewerAPI }
 from "https://unpkg.com/web-ifc-viewer@latest/dist/IFCViewerAPI.js";
 
-const tabla = document.getElementById("tabla");
 
-const datos = await fetch("./data/datos.json").then(r => r.json());
+async function iniciar()
+{
 
-datos.forEach((item, index) => {
+    const tabla = document.getElementById("tabla");
 
-    const viewerId = "viewer_" + index;
+    const response = await fetch("./data/datos.json");
 
-    const fila = document.createElement("tr");
+    const datos = await response.json();
 
-    fila.innerHTML = `
+    datos.forEach((item, index) => {
 
-        <td>${item.codigo}</td>
-        <td>${item.elemento}</td>
-        <td>${item.ifc_type}</td>
-        <td>${item.descripcion}</td>
-        <td>${item.lod}</td>
-        <td>
-            <div id="${viewerId}" class="viewer"></div>
-        </td>
-    `;
+        const viewerId = "viewer_" + index;
 
-    tabla.appendChild(fila);
+        const fila = document.createElement("tr");
 
-    const container = document.getElementById(viewerId);
+        fila.innerHTML = `
+
+            <td>${item.codigo}</td>
+            <td>${item.elemento}</td>
+            <td>${item.ifc_type}</td>
+            <td>${item.descripcion}</td>
+            <td>${item.lod}</td>
+            <td>
+                <div id="${viewerId}" class="viewer"></div>
+            </td>
+        `;
+
+        tabla.appendChild(fila);
+
+        crearViewer(viewerId, item.ifc_path);
+
+    });
+
+}
+
+
+function crearViewer(containerId, ifcPath)
+{
+
+    const container = document.getElementById(containerId);
 
     const viewer = new IFCViewerAPI({
-        container,
+        container: container,
         backgroundColor: new THREE.Color(0xffffff)
     });
 
     viewer.axes.setAxes();
     viewer.grid.setGrid();
 
-    viewer.IFC.loadIfcUrl(item.ifc_path);
+    viewer.IFC.loadIfcUrl(ifcPath);
 
-});
+}
+
+
+iniciar();
 
 </script>
+
 
 </body>
 </html>
