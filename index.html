@@ -23,8 +23,8 @@ th, td {
 }
 
 .viewer {
-    width: 350px;
-    height: 250px;
+    width: 400px;
+    height: 300px;
 }
 
 </style>
@@ -38,7 +38,6 @@ th, td {
 <table>
 
 <thead>
-
 <tr>
 <th>Codigo</th>
 <th>Elemento</th>
@@ -47,7 +46,6 @@ th, td {
 <th>LOD</th>
 <th>Modelo IFC</th>
 </tr>
-
 </thead>
 
 <tbody id="tabla"></tbody>
@@ -55,20 +53,21 @@ th, td {
 </table>
 
 
-<script type="module">
+<!-- THREE JS GLOBAL -->
+<script src="https://unpkg.com/three@0.152.2/build/three.min.js"></script>
 
-import * as THREE from "https://unpkg.com/three@0.152.2/build/three.module.js";
+<!-- IFC VIEWER GLOBAL -->
+<script src="https://unpkg.com/web-ifc-viewer@latest/dist/web-ifc-viewer.js"></script>
 
-import { IFCViewerAPI }
-from "https://unpkg.com/web-ifc-viewer@latest/dist/IFCViewerAPI.js";
 
+<script>
 
 async function iniciar()
 {
 
     const tabla = document.getElementById("tabla");
 
-    const response = await fetch("./data/datos.json");
+    const response = await fetch("data/datos.json");
 
     const datos = await response.json();
 
@@ -79,15 +78,12 @@ async function iniciar()
         const fila = document.createElement("tr");
 
         fila.innerHTML = `
-
             <td>${item.codigo}</td>
             <td>${item.elemento}</td>
             <td>${item.ifc_type}</td>
             <td>${item.descripcion}</td>
             <td>${item.lod}</td>
-            <td>
-                <div id="${viewerId}" class="viewer"></div>
-            </td>
+            <td><div id="${viewerId}" class="viewer"></div></td>
         `;
 
         tabla.appendChild(fila);
@@ -99,20 +95,19 @@ async function iniciar()
 }
 
 
-function crearViewer(containerId, ifcPath)
+function crearViewer(id, ruta)
 {
 
-    const container = document.getElementById(containerId);
+    const container = document.getElementById(id);
 
-    const viewer = new IFCViewerAPI({
-        container: container,
-        backgroundColor: new THREE.Color(0xffffff)
+    const viewer = new WebIFCViewer.Viewer({
+        container: container
     });
 
     viewer.axes.setAxes();
     viewer.grid.setGrid();
 
-    viewer.IFC.loadIfcUrl(ifcPath);
+    viewer.IFC.loadIfcUrl(ruta);
 
 }
 
