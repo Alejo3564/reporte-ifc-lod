@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+
+<meta charset="UTF-8">
+<title>Reporte IFC LOD</title>
+
+<style>
+
+body {
+    font-family: Arial;
+    margin: 20px;
+}
+
+table {
+    border-collapse: collapse;
+    width: 100%;
+}
+
+th, td {
+    border: 1px solid #ccc;
+    padding: 6px;
+}
+
+.viewer {
+    width: 350px;
+    height: 250px;
+}
+
+</style>
+
+</head>
+
+<body>
+
+<h2>Reporte LOD Objetos IFC</h2>
+
+<table>
+
+<thead>
+
+<tr>
+<th>Codigo</th>
+<th>Elemento</th>
+<th>IFC Type</th>
+<th>Descripción</th>
+<th>LOD</th>
+<th>Modelo IFC</th>
+</tr>
+
+</thead>
+
+<tbody id="tabla"></tbody>
+
+</table>
+
+
+<script type="module">
+
+import { IFCViewerAPI }
+from "https://unpkg.com/web-ifc-viewer@latest/dist/IFCViewerAPI.js";
+
+const tabla = document.getElementById("tabla");
+
+const datos = await fetch("./data/datos.json").then(r => r.json());
+
+datos.forEach((item, index) => {
+
+    const viewerId = "viewer_" + index;
+
+    const fila = document.createElement("tr");
+
+    fila.innerHTML = `
+
+        <td>${item.codigo}</td>
+        <td>${item.elemento}</td>
+        <td>${item.ifc_type}</td>
+        <td>${item.descripcion}</td>
+        <td>${item.lod}</td>
+        <td>
+            <div id="${viewerId}" class="viewer"></div>
+        </td>
+    `;
+
+    tabla.appendChild(fila);
+
+    const container = document.getElementById(viewerId);
+
+    const viewer = new IFCViewerAPI({
+        container,
+        backgroundColor: new THREE.Color(0xffffff)
+    });
+
+    viewer.axes.setAxes();
+    viewer.grid.setGrid();
+
+    viewer.IFC.loadIfcUrl(item.ifc_path);
+
+});
+
+</script>
+
+</body>
+</html>
