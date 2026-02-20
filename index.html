@@ -53,21 +53,21 @@ th, td {
 </table>
 
 
-<!-- THREE JS GLOBAL -->
-<script src="https://unpkg.com/three@0.152.2/build/three.min.js"></script>
+<script type="module">
 
-<!-- IFC VIEWER GLOBAL -->
-<script src="https://unpkg.com/web-ifc-viewer@latest/dist/web-ifc-viewer.js"></script>
+import * as THREE from "https://cdn.jsdelivr.net/npm/three@0.152.2/build/three.module.js";
 
+import { OrbitControls } from "https://cdn.jsdelivr.net/npm/three@0.152.2/examples/jsm/controls/OrbitControls.js";
 
-<script>
+import { IFCLoader } from "https://cdn.jsdelivr.net/npm/web-ifc-three@0.0.126/IFCLoader.js";
+
 
 async function iniciar()
 {
 
     const tabla = document.getElementById("tabla");
 
-    const response = await fetch("data/datos.json");
+    const response = await fetch("./data/datos.json");
 
     const datos = await response.json();
 
@@ -95,19 +95,61 @@ async function iniciar()
 }
 
 
-function crearViewer(id, ruta)
+function crearViewer(containerId, ifcPath)
 {
 
-    const container = document.getElementById(id);
+    const container = document.getElementById(containerId);
 
-    const viewer = new WebIFCViewer.Viewer({
-        container: container
+    const scene = new THREE.Scene();
+
+    const camera = new THREE.PerspectiveCamera(
+        75,
+        container.clientWidth / container.clientHeight,
+        0.1,
+        1000
+    );
+
+    const renderer = new THREE.WebGLRenderer({ antialias: true });
+
+    renderer.setSize(container.clientWidth, container.clientHeight);
+
+    container.appendChild(renderer.domElement);
+
+
+    const controls = new OrbitControls(camera, renderer.domElement);
+
+    const light = new THREE.DirectionalLight(0xffffff, 1);
+
+    light.position.set(10, 10, 10);
+
+    scene.add(light);
+
+
+    const loader = new IFCLoader();
+
+    loader.load(ifcPath, function(model)
+    {
+
+        scene.add(model);
+
     });
 
-    viewer.axes.setAxes();
-    viewer.grid.setGrid();
 
-    viewer.IFC.loadIfcUrl(ruta);
+    camera.position.z = 10;
+
+
+    function animate()
+    {
+
+        requestAnimationFrame(animate);
+
+        controls.update();
+
+        renderer.render(scene, camera);
+
+    }
+
+    animate();
 
 }
 
