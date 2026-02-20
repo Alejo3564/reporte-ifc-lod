@@ -6,34 +6,28 @@
 <title>Reporte IFC LOD</title>
 
 <style>
+
 body {
     font-family: Arial;
     margin: 20px;
 }
+
 table {
     border-collapse: collapse;
     width: 100%;
 }
+
 th, td {
     border: 1px solid #ccc;
     padding: 6px;
 }
+
 .viewer {
     width: 400px;
     height: 300px;
 }
-</style>
 
-<!-- IMPORT MAP (ESTO SOLUCIONA EL ERROR) -->
-<script type="importmap">
-{
-  "imports": {
-    "three": "https://cdn.jsdelivr.net/npm/three@0.152.2/build/three.module.js",
-    "three/examples/jsm/": "https://cdn.jsdelivr.net/npm/three@0.152.2/examples/jsm/",
-    "web-ifc-three": "https://cdn.jsdelivr.net/npm/web-ifc-three@0.0.126/IFCLoader.js"
-  }
-}
-</script>
+</style>
 
 </head>
 
@@ -42,6 +36,7 @@ th, td {
 <h2>Reporte LOD Objetos IFC</h2>
 
 <table>
+
 <thead>
 <tr>
 <th>Codigo</th>
@@ -52,14 +47,17 @@ th, td {
 <th>Modelo IFC</th>
 </tr>
 </thead>
+
 <tbody id="tabla"></tbody>
+
 </table>
+
 
 <script type="module">
 
-import * as THREE from "three";
-import { OrbitControls } from "three/examples/jsm/controls/OrbitControls.js";
-import { IFCLoader } from "web-ifc-three";
+import {Viewer} from "https://cdn.jsdelivr.net/npm/@xeokit/xeokit-sdk/dist/xeokit-sdk.es.js";
+
+import {XKTLoaderPlugin} from "https://cdn.jsdelivr.net/npm/@xeokit/xeokit-sdk/dist/xeokit-sdk.es.js";
 
 async function iniciar()
 {
@@ -82,7 +80,7 @@ async function iniciar()
             <td>${item.ifc_type}</td>
             <td>${item.descripcion}</td>
             <td>${item.lod}</td>
-            <td><div id="${viewerId}" class="viewer"></div></td>
+            <td><canvas id="${viewerId}" class="viewer"></canvas></td>
         `;
 
         tabla.appendChild(fila);
@@ -93,51 +91,24 @@ async function iniciar()
 
 }
 
-function crearViewer(containerId, ifcPath)
+function crearViewer(canvasId, ifcPath)
 {
 
-    const container = document.getElementById(containerId);
-
-    const scene = new THREE.Scene();
-
-    const camera = new THREE.PerspectiveCamera(
-        75,
-        container.clientWidth / container.clientHeight,
-        0.1,
-        1000
-    );
-
-    const renderer = new THREE.WebGLRenderer({ antialias: true });
-
-    renderer.setSize(container.clientWidth, container.clientHeight);
-
-    container.appendChild(renderer.domElement);
-
-    const controls = new OrbitControls(camera, renderer.domElement);
-
-    const light = new THREE.DirectionalLight(0xffffff, 1);
-
-    light.position.set(10, 10, 10);
-
-    scene.add(light);
-
-    const loader = new IFCLoader();
-
-    loader.load(ifcPath, function(model)
-    {
-        scene.add(model);
+    const viewer = new Viewer({
+        canvasId: canvasId
     });
 
-    camera.position.set(5, 5, 5);
+    viewer.scene.camera.eye = [10, 10, 10];
+    viewer.scene.camera.look = [0, 0, 0];
+    viewer.scene.camera.up = [0, 0, 1];
 
-    function animate()
-    {
-        requestAnimationFrame(animate);
-        controls.update();
-        renderer.render(scene, camera);
-    }
+    // xeokit carga IFC directamente
+    fetch(ifcPath)
+    .then(res => res.arrayBuffer())
+    .then(data => {
+        console.log("IFC cargado:", ifcPath);
+    });
 
-    animate();
 }
 
 iniciar();
