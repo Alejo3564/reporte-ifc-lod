@@ -6,28 +6,34 @@
 <title>Reporte IFC LOD</title>
 
 <style>
-
 body {
     font-family: Arial;
     margin: 20px;
 }
-
 table {
     border-collapse: collapse;
     width: 100%;
 }
-
 th, td {
     border: 1px solid #ccc;
     padding: 6px;
 }
-
 .viewer {
     width: 400px;
     height: 300px;
 }
-
 </style>
+
+<!-- IMPORT MAP (ESTO SOLUCIONA EL ERROR) -->
+<script type="importmap">
+{
+  "imports": {
+    "three": "https://cdn.jsdelivr.net/npm/three@0.152.2/build/three.module.js",
+    "three/examples/jsm/": "https://cdn.jsdelivr.net/npm/three@0.152.2/examples/jsm/",
+    "web-ifc-three": "https://cdn.jsdelivr.net/npm/web-ifc-three@0.0.126/IFCLoader.js"
+  }
+}
+</script>
 
 </head>
 
@@ -36,7 +42,6 @@ th, td {
 <h2>Reporte LOD Objetos IFC</h2>
 
 <table>
-
 <thead>
 <tr>
 <th>Codigo</th>
@@ -47,20 +52,14 @@ th, td {
 <th>Modelo IFC</th>
 </tr>
 </thead>
-
 <tbody id="tabla"></tbody>
-
 </table>
-
 
 <script type="module">
 
-import * as THREE from "https://cdn.jsdelivr.net/npm/three@0.152.2/build/three.module.js";
-
-import { OrbitControls } from "https://cdn.jsdelivr.net/npm/three@0.152.2/examples/jsm/controls/OrbitControls.js";
-
-import { IFCLoader } from "https://cdn.jsdelivr.net/npm/web-ifc-three@0.0.126/IFCLoader.js";
-
+import * as THREE from "three";
+import { OrbitControls } from "three/examples/jsm/controls/OrbitControls.js";
+import { IFCLoader } from "web-ifc-three";
 
 async function iniciar()
 {
@@ -94,7 +93,6 @@ async function iniciar()
 
 }
 
-
 function crearViewer(containerId, ifcPath)
 {
 
@@ -115,7 +113,6 @@ function crearViewer(containerId, ifcPath)
 
     container.appendChild(renderer.domElement);
 
-
     const controls = new OrbitControls(camera, renderer.domElement);
 
     const light = new THREE.DirectionalLight(0xffffff, 1);
@@ -124,40 +121,28 @@ function crearViewer(containerId, ifcPath)
 
     scene.add(light);
 
-
     const loader = new IFCLoader();
 
     loader.load(ifcPath, function(model)
     {
-
         scene.add(model);
-
     });
 
-
-    camera.position.z = 10;
-
+    camera.position.set(5, 5, 5);
 
     function animate()
     {
-
         requestAnimationFrame(animate);
-
         controls.update();
-
         renderer.render(scene, camera);
-
     }
 
     animate();
-
 }
-
 
 iniciar();
 
 </script>
-
 
 </body>
 </html>
