@@ -1,11 +1,8 @@
-[
-  {
-    "codigo": "G.03.01.01",
-    "elemento": "Building",
-    "ifc_type": "IfcBuilding",
-    "descripcion": "Edificación existente",
-    "lod": "300",
-    "ifc_path": "models/G.03.01.01.xkt"
-  }
-
-]
+{
+  "codigo": "G.03.01.01",
+  "elemento": "Building",
+  "ifc_type": "IfcBuilding",
+  "descripcion": "Edificación existente",
+  "lod": "300",
+  "ifc_path": "models/G.03.01.01.xkt"
+}
