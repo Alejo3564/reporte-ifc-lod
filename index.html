@@ -57,8 +57,7 @@ th, td {
 
 import {
     Viewer,
-    XKTLoaderPlugin,
-    CameraControlPlugin
+    XKTLoaderPlugin
 } from "https://cdn.jsdelivr.net/npm/@xeokit/xeokit-sdk/dist/xeokit-sdk.es.js";
 
 
@@ -102,21 +101,14 @@ function crearViewer(canvasId, xktPath)
 
     const viewer = new Viewer({
 
-        canvasId: canvasId,
-
-        transparent: false
+        canvasId: canvasId
 
     });
 
 
-    // Crear control de cámara correctamente
-    new CameraControlPlugin(viewer);
-
-
-    viewer.scene.camera.eye = [10, 10, 10];
-
+    // Posición inicial cámara
+    viewer.scene.camera.eye = [5, 5, 5];
     viewer.scene.camera.look = [0, 0, 0];
-
     viewer.scene.camera.up = [0, 0, 1];
 
 
@@ -124,8 +116,6 @@ function crearViewer(canvasId, xktPath)
 
 
     loader.load({
-
-        id: "modelo",
 
         src: xktPath,
 
