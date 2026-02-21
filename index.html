@@ -35,6 +35,15 @@ th, td {
     width: 400px;
 }
 
+.filtros {
+    margin-bottom: 15px;
+}
+
+.filtros input {
+    margin-right: 10px;
+    padding: 5px;
+}
+
 </style>
 
 </head>
@@ -43,7 +52,22 @@ th, td {
 
 <h2>Reporte LOD Objetos IFC</h2>
 
-<table>
+
+<div class="filtros">
+
+<label>Buscar Código:</label>
+<input type="text" id="filtroCodigo" onkeyup="filtrar()">
+
+<label>Buscar Elemento:</label>
+<input type="text" id="filtroElemento" onkeyup="filtrar()">
+
+<label>Buscar IFC Type:</label>
+<input type="text" id="filtroIfcType" onkeyup="filtrar()">
+
+</div>
+
+
+<table id="tabla">
 
 <thead>
 <tr>
@@ -56,9 +80,10 @@ th, td {
 </tr>
 </thead>
 
-<tbody id="tabla"></tbody>
+<tbody id="tablaBody"></tbody>
 
 </table>
+
 
 <h3>Propiedades del elemento seleccionado</h3>
 <div id="propiedades">
@@ -74,14 +99,27 @@ import {
 } from "https://cdn.jsdelivr.net/npm/@xeokit/xeokit-sdk/dist/xeokit-sdk.es.js";
 
 
+let datosGlobal = [];
+
+
 async function iniciar()
 {
 
     const response = await fetch("./data/datos.json?v=" + Date.now());
 
-    const datos = await response.json();
+    datosGlobal = await response.json();
 
-    const tabla = document.getElementById("tabla");
+    renderTabla(datosGlobal);
+
+}
+
+
+function renderTabla(datos)
+{
+
+    const tabla = document.getElementById("tablaBody");
+
+    tabla.innerHTML = "";
 
     datos.forEach((item, index) => {
 
@@ -114,17 +152,13 @@ function crearViewer(canvasId, xktPath)
         canvasId: canvasId
     });
 
-
     const loader = new XKTLoaderPlugin(viewer);
-
 
     const model = loader.load({
         src: xktPath,
         edges: true
     });
 
-
-    // Ajustar cámara automáticamente cuando el modelo carga
     model.on("loaded", () => {
 
         viewer.cameraFlight.flyTo({
@@ -133,8 +167,6 @@ function crearViewer(canvasId, xktPath)
 
     });
 
-
-    // Mostrar propiedades al hacer clic
     viewer.scene.input.on("mouseclicked", (coords) => {
 
         const hit = viewer.scene.pick({
@@ -155,11 +187,30 @@ function crearViewer(canvasId, xktPath)
 }
 
 
+window.filtrar = function()
+{
+
+    const codigo = document.getElementById("filtroCodigo").value.toLowerCase();
+
+    const elemento = document.getElementById("filtroElemento").value.toLowerCase();
+
+    const ifcType = document.getElementById("filtroIfcType").value.toLowerCase();
+
+
+    const filtrados = datosGlobal.filter(item =>
+        item.codigo.toLowerCase().includes(codigo) &&
+        item.elemento.toLowerCase().includes(elemento) &&
+        item.ifc_type.toLowerCase().includes(ifcType)
+    );
+
+    renderTabla(filtrados);
+
+}
+
+
 iniciar();
 
 </script>
 
 </body>
 </html>
-
-
