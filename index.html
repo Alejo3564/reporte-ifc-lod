@@ -57,7 +57,8 @@ th, td {
 
 import {
     Viewer,
-    XKTLoaderPlugin
+    XKTLoaderPlugin,
+    CameraControlPlugin
 } from "https://cdn.jsdelivr.net/npm/@xeokit/xeokit-sdk/dist/xeokit-sdk.es.js";
 
 
@@ -103,9 +104,13 @@ function crearViewer(canvasId, xktPath)
 
         canvasId: canvasId,
 
-        transparent: true
+        transparent: false
 
     });
+
+
+    // Crear control de cámara correctamente
+    new CameraControlPlugin(viewer);
 
 
     viewer.scene.camera.eye = [10, 10, 10];
@@ -113,9 +118,6 @@ function crearViewer(canvasId, xktPath)
     viewer.scene.camera.look = [0, 0, 0];
 
     viewer.scene.camera.up = [0, 0, 1];
-
-
-    viewer.scene.cameraControl.panToPointer = true;
 
 
     const loader = new XKTLoaderPlugin(viewer);
@@ -130,7 +132,6 @@ function crearViewer(canvasId, xktPath)
         edges: true
 
     });
-
 
 }
 
