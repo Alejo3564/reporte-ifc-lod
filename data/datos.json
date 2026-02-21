@@ -5,7 +5,16 @@
     "ifc_type": "IfcBuilding",
     "descripcion": "Edificación existente",
     "lod": "300",
+    "ifc_path": "models/G.03.01.01.xkt"
+  },
+  {
+    "codigo": "G.03.01.01",
+    "elemento": "Bridge",
+    "ifc_type": "IfcBridge",
+    "descripcion": "Puentes",
+    "lod": "200",
     "ifc_path": "models/modelo3d.xkt"
   }
 ]
+
 
