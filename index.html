@@ -24,7 +24,15 @@ th, td {
 
 .viewer {
     width: 400px;
-    height: 400px;
+    height: 300px;
+    border: 1px solid #999;
+}
+
+#propiedades {
+    margin-top: 20px;
+    padding: 10px;
+    border: 1px solid #999;
+    width: 400px;
 }
 
 </style>
@@ -52,6 +60,11 @@ th, td {
 
 </table>
 
+<h3>Propiedades del elemento seleccionado</h3>
+<div id="propiedades">
+IfcType: <span id="ifcType">Ninguno</span>
+</div>
+
 
 <script type="module">
 
@@ -64,47 +77,32 @@ import {
 async function iniciar()
 {
 
-    try {
+    const response = await fetch("./data/datos.json?v=" + Date.now());
 
-        const response = await fetch("./data/datos.json");
+    const datos = await response.json();
 
-        if (!response.ok)
-            throw new Error("No se pudo cargar datos.json");
+    const tabla = document.getElementById("tabla");
 
-        const datos = await response.json();
+    datos.forEach((item, index) => {
 
-        if (!Array.isArray(datos))
-            throw new Error("datos.json no es un array");
+        const canvasId = "viewer_" + index;
 
-        const tabla = document.getElementById("tabla");
+        const fila = document.createElement("tr");
 
-        datos.forEach((item, index) => {
+        fila.innerHTML = `
+            <td>${item.codigo}</td>
+            <td>${item.elemento}</td>
+            <td>${item.ifc_type}</td>
+            <td>${item.descripcion}</td>
+            <td>${item.lod}</td>
+            <td><canvas id="${canvasId}" class="viewer"></canvas></td>
+        `;
 
-            const canvasId = "viewer_" + index;
+        tabla.appendChild(fila);
 
-            const fila = document.createElement("tr");
+        crearViewer(canvasId, item.ifc_path);
 
-            fila.innerHTML = `
-                <td>${item.codigo}</td>
-                <td>${item.elemento}</td>
-                <td>${item.ifc_type}</td>
-                <td>${item.descripcion}</td>
-                <td>${item.lod}</td>
-                <td><canvas id="${canvasId}" class="viewer"></canvas></td>
-            `;
-
-            tabla.appendChild(fila);
-
-            crearViewer(canvasId, item.ifc_path);
-
-        });
-
-    }
-    catch(error)
-    {
-        console.error(error);
-        alert(error.message);
-    }
+    });
 
 }
 
@@ -116,14 +114,42 @@ function crearViewer(canvasId, xktPath)
         canvasId: canvasId
     });
 
-    viewer.scene.camera.eye = [5, 5, 5];
-    viewer.scene.camera.look = [0, 0, 0];
-    viewer.scene.camera.up = [0, 0, 1];
 
     const loader = new XKTLoaderPlugin(viewer);
 
-    loader.load({
-        src: xktPath
+
+    const model = loader.load({
+        src: xktPath,
+        edges: true
+    });
+
+
+    // Ajustar cámara automáticamente cuando el modelo carga
+    model.on("loaded", () => {
+
+        viewer.cameraFlight.flyTo({
+            aabb: viewer.scene.aabb
+        });
+
+    });
+
+
+    // Mostrar propiedades al hacer clic
+    viewer.scene.input.on("mouseclicked", (coords) => {
+
+        const hit = viewer.scene.pick({
+            canvasPos: coords
+        });
+
+        if (hit && hit.entity)
+        {
+            const entity = hit.entity;
+
+            const ifcType = entity.metaObject?.type || "No disponible";
+
+            document.getElementById("ifcType").innerText = ifcType;
+        }
+
     });
 
 }
@@ -133,7 +159,5 @@ iniciar();
 
 </script>
 
-
 </body>
 </html>
-
