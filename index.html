@@ -64,34 +64,47 @@ import {
 async function iniciar()
 {
 
-    const tabla = document.getElementById("tabla");
+    try {
 
-    const response = await fetch("./data/datos.json");
+        const response = await fetch("./data/datos.json");
 
-    const datos = await response.json();
+        if (!response.ok)
+            throw new Error("No se pudo cargar datos.json");
 
-    datos.forEach((item, index) => {
+        const datos = await response.json();
 
-        const canvasId = "viewer_" + index;
+        if (!Array.isArray(datos))
+            throw new Error("datos.json no es un array");
 
-        const fila = document.createElement("tr");
+        const tabla = document.getElementById("tabla");
 
-        fila.innerHTML = `
-            <td>${item.codigo}</td>
-            <td>${item.elemento}</td>
-            <td>${item.ifc_type}</td>
-            <td>${item.descripcion}</td>
-            <td>${item.lod}</td>
-            <td>
-                <canvas id="${canvasId}" class="viewer"></canvas>
-            </td>
-        `;
+        datos.forEach((item, index) => {
 
-        tabla.appendChild(fila);
+            const canvasId = "viewer_" + index;
 
-        crearViewer(canvasId, item.ifc_path);
+            const fila = document.createElement("tr");
 
-    });
+            fila.innerHTML = `
+                <td>${item.codigo}</td>
+                <td>${item.elemento}</td>
+                <td>${item.ifc_type}</td>
+                <td>${item.descripcion}</td>
+                <td>${item.lod}</td>
+                <td><canvas id="${canvasId}" class="viewer"></canvas></td>
+            `;
+
+            tabla.appendChild(fila);
+
+            crearViewer(canvasId, item.ifc_path);
+
+        });
+
+    }
+    catch(error)
+    {
+        console.error(error);
+        alert(error.message);
+    }
 
 }
 
@@ -100,27 +113,17 @@ function crearViewer(canvasId, xktPath)
 {
 
     const viewer = new Viewer({
-
         canvasId: canvasId
-
     });
 
-
-    // Posición inicial cámara
     viewer.scene.camera.eye = [5, 5, 5];
     viewer.scene.camera.look = [0, 0, 0];
     viewer.scene.camera.up = [0, 0, 1];
 
-
     const loader = new XKTLoaderPlugin(viewer);
 
-
     loader.load({
-
-        src: xktPath,
-
-        edges: true
-
+        src: xktPath
     });
 
 }
