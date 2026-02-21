@@ -55,9 +55,11 @@ th, td {
 
 <script type="module">
 
-import {Viewer} from "https://cdn.jsdelivr.net/npm/@xeokit/xeokit-sdk/dist/xeokit-sdk.es.js";
+import {
+    Viewer,
+    XKTLoaderPlugin
+} from "https://cdn.jsdelivr.net/npm/@xeokit/xeokit-sdk/dist/xeokit-sdk.es.js";
 
-import {XKTLoaderPlugin} from "https://cdn.jsdelivr.net/npm/@xeokit/xeokit-sdk/dist/xeokit-sdk.es.js";
 
 async function iniciar()
 {
@@ -70,7 +72,7 @@ async function iniciar()
 
     datos.forEach((item, index) => {
 
-        const viewerId = "viewer_" + index;
+        const canvasId = "viewer_" + index;
 
         const fila = document.createElement("tr");
 
@@ -80,40 +82,63 @@ async function iniciar()
             <td>${item.ifc_type}</td>
             <td>${item.descripcion}</td>
             <td>${item.lod}</td>
-            <td><canvas id="${viewerId}" class="viewer"></canvas></td>
+            <td>
+                <canvas id="${canvasId}" class="viewer"></canvas>
+            </td>
         `;
 
         tabla.appendChild(fila);
 
-        crearViewer(viewerId, item.ifc_path);
+        crearViewer(canvasId, item.ifc_path);
 
     });
 
 }
 
-function crearViewer(canvasId, ifcPath)
+
+function crearViewer(canvasId, xktPath)
 {
 
     const viewer = new Viewer({
-        canvasId: canvasId
+
+        canvasId: canvasId,
+
+        transparent: true
+
     });
+
 
     viewer.scene.camera.eye = [10, 10, 10];
+
     viewer.scene.camera.look = [0, 0, 0];
+
     viewer.scene.camera.up = [0, 0, 1];
 
-    // xeokit carga IFC directamente
-    fetch(ifcPath)
-    .then(res => res.arrayBuffer())
-    .then(data => {
-        console.log("IFC cargado:", ifcPath);
+
+    viewer.scene.cameraControl.panToPointer = true;
+
+
+    const loader = new XKTLoaderPlugin(viewer);
+
+
+    loader.load({
+
+        id: "modelo",
+
+        src: xktPath,
+
+        edges: true
+
     });
 
+
 }
+
 
 iniciar();
 
 </script>
+
 
 </body>
 </html>
