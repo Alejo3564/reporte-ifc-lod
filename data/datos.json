@@ -8,7 +8,7 @@
     "ifc_path": "models/G.03.01.01.xkt"
   },
   {
-    "codigo": "G.03.01.01",
+    "codigo": "G.03.01.05",
     "elemento": "Bridge",
     "ifc_type": "IfcBridge",
     "descripcion": "Puentes",
@@ -16,5 +16,6 @@
     "ifc_path": "models/modelo3d.xkt"
   }
 ]
+
 
 
