@@ -1,269 +1,446 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-
 <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Reporte IFC LOD</title>
 
 <style>
+  @import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;600&family=IBM+Plex+Sans:wght@300;400;600&display=swap');
 
-body {
-    font-family: Arial;
-    margin: 20px;
-}
+  :root {
+    --bg: #0f1117;
+    --surface: #1a1d27;
+    --surface2: #222636;
+    --border: #2e3347;
+    --accent: #3b82f6;
+    --accent2: #10b981;
+    --text: #e2e8f0;
+    --text-muted: #64748b;
+  }
 
-table {
-    border-collapse: collapse;
-    width: 100%;
-}
+  * { box-sizing: border-box; margin: 0; padding: 0; }
 
-th, td {
-    border: 1px solid #ccc;
-    padding: 6px;
-}
+  body {
+    font-family: 'IBM Plex Sans', sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+  }
 
-.viewer {
-    width: 400px;
-    height: 300px;
-    border: 1px solid #999;
-}
+  /* HEADER */
+  header {
+    background: var(--surface);
+    border-bottom: 1px solid var(--border);
+    padding: 16px 32px;
+    display: flex;
+    align-items: center;
+    gap: 16px;
+  }
+  header .logo {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 11px;
+    color: var(--accent);
+    letter-spacing: 2px;
+    text-transform: uppercase;
+  }
+  header h1 {
+    font-size: 17px;
+    font-weight: 600;
+    letter-spacing: -0.3px;
+  }
+  header .sep { width: 1px; height: 22px; background: var(--border); }
 
-#propiedades {
+  .main-container {
+    padding: 28px 32px;
+    max-width: 1600px;
+    margin: 0 auto;
+  }
+
+  /* FILTROS */
+  .filtros-bar {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 16px 20px;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px;
+    align-items: flex-end;
+    margin-bottom: 20px;
+  }
+  .filtro-group { display: flex; flex-direction: column; gap: 4px; }
+  .filtro-group label {
+    font-size: 10px;
+    font-family: 'IBM Plex Mono', monospace;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    color: var(--text-muted);
+  }
+  .filtro-group select {
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    color: var(--text);
+    padding: 7px 10px;
+    border-radius: 5px;
+    font-family: 'IBM Plex Sans', sans-serif;
+    font-size: 13px;
+    cursor: pointer;
+    min-width: 130px;
+    outline: none;
+    transition: border-color 0.15s;
+  }
+  .filtro-group select:focus { border-color: var(--accent); }
+  .btn-clear {
+    background: transparent;
+    border: 1px solid var(--border);
+    color: var(--text-muted);
+    padding: 7px 14px;
+    border-radius: 5px;
+    font-family: 'IBM Plex Sans', sans-serif;
+    font-size: 12px;
+    cursor: pointer;
+    transition: all 0.15s;
+  }
+  .btn-clear:hover { border-color: var(--accent); color: var(--accent); }
+  .count-badge {
+    margin-left: auto;
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 12px;
+    color: var(--text-muted);
+  }
+
+  /* TABLA */
+  .table-wrapper {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    overflow: hidden;
+  }
+  table { border-collapse: collapse; width: 100%; }
+  thead { background: var(--surface2); border-bottom: 2px solid var(--border); }
+  th {
+    padding: 12px 16px;
+    text-align: left;
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 10px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 1.5px;
+    color: var(--text-muted);
+    white-space: nowrap;
+  }
+  tbody tr { border-bottom: 1px solid var(--border); transition: background 0.1s; }
+  tbody tr:last-child { border-bottom: none; }
+  tbody tr:hover { background: var(--surface2); }
+  td { padding: 14px 16px; font-size: 13px; vertical-align: middle; }
+  td.codigo { font-family: 'IBM Plex Mono', monospace; font-size: 12px; color: var(--accent); }
+  td.ifc-type { font-family: 'IBM Plex Mono', monospace; font-size: 11px; color: var(--accent2); }
+
+  .lod-badge {
+    display: inline-block;
+    padding: 2px 8px;
+    border-radius: 3px;
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 11px;
+    font-weight: 600;
+  }
+  .lod-200 { background: rgba(245,158,11,0.12); color: #f59e0b; border: 1px solid rgba(245,158,11,0.3); }
+  .lod-300 { background: rgba(16,185,129,0.12); color: #10b981; border: 1px solid rgba(16,185,129,0.3); }
+  .lod-400 { background: rgba(59,130,246,0.12); color: #3b82f6; border: 1px solid rgba(59,130,246,0.3); }
+  .lod-500 { background: rgba(168,85,247,0.12); color: #a855f7; border: 1px solid rgba(168,85,247,0.3); }
+
+  /* VISOR */
+  .viewer-cell { width: 380px; padding: 10px 16px; }
+  .viewer-container {
+    position: relative;
+    width: 350px;
+    height: 240px;
+    border-radius: 6px;
+    overflow: hidden;
+    background: #080a12;
+    border: 1px solid var(--border);
+  }
+  .viewer-container canvas {
+    width: 100% !important;
+    height: 100% !important;
+    display: block;
+  }
+  .viewer-loading {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    background: #080a12;
+    z-index: 10;
+    transition: opacity 0.4s;
+  }
+  .viewer-loading.hidden { opacity: 0; pointer-events: none; }
+  .spinner {
+    width: 22px; height: 22px;
+    border: 2px solid var(--border);
+    border-top-color: var(--accent);
+    border-radius: 50%;
+    animation: spin 0.8s linear infinite;
+  }
+  .viewer-loading span {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 10px;
+    color: var(--text-muted);
+    letter-spacing: 1px;
+  }
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  /* PANEL PROPIEDADES */
+  .props-panel {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 20px;
     margin-top: 20px;
-    padding: 10px;
-    border: 1px solid #999;
-    width: 400px;
-}
+  }
+  .props-panel h3 {
+    font-size: 10px;
+    font-family: 'IBM Plex Mono', monospace;
+    text-transform: uppercase;
+    letter-spacing: 2px;
+    color: var(--text-muted);
+    margin-bottom: 14px;
+  }
+  .props-grid { display: flex; gap: 32px; flex-wrap: wrap; }
+  .prop-item { display: flex; flex-direction: column; gap: 4px; }
+  .prop-label { font-size: 10px; font-family: 'IBM Plex Mono', monospace; color: var(--text-muted); text-transform: uppercase; letter-spacing: 1px; }
+  .prop-value { font-size: 14px; font-weight: 500; }
+  .prop-value.mono { font-family: 'IBM Plex Mono', monospace; color: var(--accent2); }
 
-.filtros {
-    margin-bottom: 15px;
-}
-
-.filtros select, .filtros button {
-    margin-right: 10px;
-    padding: 5px;
-}
-
+  .empty-state { padding: 48px; text-align: center; color: var(--text-muted); font-size: 13px; display: none; }
 </style>
-
 </head>
-
 <body>
 
-<h2>Reporte LOD Objetos IFC</h2>
+<header>
+  <div class="logo">BIM Smart Tools</div>
+  <div class="sep"></div>
+  <h1>Reporte LOD — Objetos IFC</h1>
+</header>
 
+<div class="main-container">
 
-<div class="filtros">
+  <div class="filtros-bar">
+    <div class="filtro-group">
+      <label>Código</label>
+      <select id="filtroCodigo" onchange="filtrar()"><option value="">Todos</option></select>
+    </div>
+    <div class="filtro-group">
+      <label>Elemento</label>
+      <select id="filtroElemento" onchange="filtrar()"><option value="">Todos</option></select>
+    </div>
+    <div class="filtro-group">
+      <label>IFC Type</label>
+      <select id="filtroIfcType" onchange="filtrar()"><option value="">Todos</option></select>
+    </div>
+    <div class="filtro-group">
+      <label>LOD</label>
+      <select id="filtroLOD" onchange="filtrar()"><option value="">Todos</option></select>
+    </div>
+    <button class="btn-clear" onclick="limpiarFiltros()">✕ Limpiar</button>
+    <span class="count-badge" id="countBadge"></span>
+  </div>
 
-<label>Código:</label>
-<select id="filtroCodigo" onchange="filtrar()">
-<option value="">Todos</option>
-</select>
+  <div class="table-wrapper">
+    <table>
+      <thead>
+        <tr>
+          <th>Código</th>
+          <th>Elemento</th>
+          <th>IFC Type</th>
+          <th>Descripción</th>
+          <th>LOD</th>
+          <th>Modelo 3D (IFC)</th>
+        </tr>
+      </thead>
+      <tbody id="tablaBody"></tbody>
+    </table>
+    <div class="empty-state" id="emptyState">No hay resultados para los filtros aplicados.</div>
+  </div>
 
-<label>Elemento:</label>
-<select id="filtroElemento" onchange="filtrar()">
-<option value="">Todos</option>
-</select>
-
-<label>IFC Type:</label>
-<select id="filtroIfcType" onchange="filtrar()">
-<option value="">Todos</option>
-</select>
-
-<label>LOD:</label>
-<select id="filtroLOD" onchange="filtrar()">
-<option value="">Todos</option>
-</select>
-
-<button onclick="limpiarFiltros()">Limpiar filtros</button>
+  <div class="props-panel">
+    <h3>Elemento seleccionado</h3>
+    <div class="props-grid">
+      <div class="prop-item">
+        <span class="prop-label">IFC Type</span>
+        <span class="prop-value mono" id="propIfcType">—</span>
+      </div>
+      <div class="prop-item">
+        <span class="prop-label">Nombre</span>
+        <span class="prop-value" id="propNombre">—</span>
+      </div>
+      <div class="prop-item">
+        <span class="prop-label">Express ID</span>
+        <span class="prop-value" id="propId">—</span>
+      </div>
+    </div>
+  </div>
 
 </div>
 
-
-<table>
-
-<thead>
-<tr>
-<th>Codigo</th>
-<th>Elemento</th>
-<th>IFC Type</th>
-<th>Descripción</th>
-<th>LOD</th>
-<th>Modelo IFC</th>
-</tr>
-</thead>
-
-<tbody id="tablaBody"></tbody>
-
-</table>
-
-
-<h3>Propiedades del elemento seleccionado</h3>
-<div id="propiedades">
-IfcType: <span id="ifcType">Ninguno</span>
-</div>
-
+<!-- THREE.js (peer dep de web-ifc-viewer, debe cargarse ANTES) -->
+<script src="https://unpkg.com/three@0.133.0/build/three.min.js"></script>
 
 <script type="module">
 
-import {
-    Viewer,
-    XKTLoaderPlugin
-} from "https://cdn.jsdelivr.net/npm/@xeokit/xeokit-sdk/dist/xeokit-sdk.es.js";
+// ─── IMPORTAR WEB-IFC-VIEWER ────────────────────────────────────────────────
+// web-ifc-viewer es la librería de IFC.js más madura para cargar IFC en browser
+// sin necesidad de servidor ni conversión a XKT.
+import { IfcViewerAPI } from "https://unpkg.com/web-ifc-viewer@1.0.216/dist/index.js";
 
-
+// ─── ESTADO GLOBAL ──────────────────────────────────────────────────────────
 let datosGlobal = [];
+const viewerInstances = {};
 
-
-// INICIAR
-async function iniciar()
-{
-    const response = await fetch("./data/datos.json?v=" + Date.now());
-
-    datosGlobal = await response.json();
-
-    llenarDropdowns();
-
-    renderTabla(datosGlobal);
+// ─── INICIAR ────────────────────────────────────────────────────────────────
+async function iniciar() {
+  const resp = await fetch("./data/datos.json?v=" + Date.now());
+  datosGlobal = await resp.json();
+  llenarDropdowns();
+  renderTabla(datosGlobal);
 }
 
-
-// LLENAR DROPDOWNS
-function llenarDropdowns()
-{
-    llenarDropdown("filtroCodigo", [...new Set(datosGlobal.map(x => x.codigo))]);
-
-    llenarDropdown("filtroElemento", [...new Set(datosGlobal.map(x => x.elemento))]);
-
-    llenarDropdown("filtroIfcType", [...new Set(datosGlobal.map(x => x.ifc_type))]);
-
-    llenarDropdown("filtroLOD", [...new Set(datosGlobal.map(x => x.lod))]);
+// ─── DROPDOWNS ──────────────────────────────────────────────────────────────
+function llenarDropdowns() {
+  llenarDropdown("filtroCodigo",   [...new Set(datosGlobal.map(x => x.codigo))]);
+  llenarDropdown("filtroElemento", [...new Set(datosGlobal.map(x => x.elemento))]);
+  llenarDropdown("filtroIfcType",  [...new Set(datosGlobal.map(x => x.ifc_type))]);
+  llenarDropdown("filtroLOD",      [...new Set(datosGlobal.map(x => x.lod))]);
 }
 
-
-function llenarDropdown(id, valores)
-{
-    const select = document.getElementById(id);
-
-    valores.sort().forEach(valor =>
-    {
-        const option = document.createElement("option");
-
-        option.value = valor;
-
-        option.text = valor;
-
-        select.appendChild(option);
-    });
+function llenarDropdown(id, valores) {
+  const sel = document.getElementById(id);
+  valores.sort().forEach(v => {
+    const o = document.createElement("option");
+    o.value = o.text = v;
+    sel.appendChild(o);
+  });
 }
 
+// ─── RENDER TABLA ───────────────────────────────────────────────────────────
+function renderTabla(datos) {
+  const tbody = document.getElementById("tablaBody");
+  document.getElementById("emptyState").style.display = datos.length === 0 ? "block" : "none";
+  document.getElementById("countBadge").textContent = `${datos.length} elemento${datos.length !== 1 ? 's' : ''}`;
 
-// RENDER TABLA
-function renderTabla(datos)
-{
-    const tabla = document.getElementById("tablaBody");
+  // Limpiar viewers anteriores
+  Object.values(viewerInstances).forEach(v => { try { v.dispose(); } catch(e){} });
+  Object.keys(viewerInstances).forEach(k => delete viewerInstances[k]);
 
-    tabla.innerHTML = "";
+  tbody.innerHTML = "";
 
-    datos.forEach((item, index) =>
-    {
-        const canvasId = "viewer_" + index;
+  datos.forEach((item, idx) => {
+    const cId = `viewer_${idx}`;
+    const lodClass = `lod-${item.lod}`;
 
-        const fila = document.createElement("tr");
+    const tr = document.createElement("tr");
+    tr.innerHTML = `
+      <td class="codigo">${item.codigo}</td>
+      <td>${item.elemento}</td>
+      <td class="ifc-type">${item.ifc_type}</td>
+      <td>${item.descripcion}</td>
+      <td><span class="lod-badge ${lodClass}">LOD ${item.lod}</span></td>
+      <td class="viewer-cell">
+        <div class="viewer-container" id="cont_${idx}">
+          <div class="viewer-loading" id="load_${idx}">
+            <div class="spinner"></div>
+            <span>Cargando IFC…</span>
+          </div>
+        </div>
+      </td>
+    `;
+    tbody.appendChild(tr);
 
-        fila.innerHTML = `
-            <td>${item.codigo}</td>
-            <td>${item.elemento}</td>
-            <td>${item.ifc_type}</td>
-            <td>${item.descripcion}</td>
-            <td>${item.lod}</td>
-            <td><canvas id="${canvasId}" class="viewer"></canvas></td>
-        `;
-
-        tabla.appendChild(fila);
-
-        crearViewer(canvasId, item.ifc_path);
-    });
+    // Inicializar viewer con pequeño delay escalonado para no saturar GPU
+    setTimeout(() => inicializarViewer(idx, cId, item.ifc_path), 150 + idx * 120);
+  });
 }
 
+// ─── INICIALIZAR VIEWER IFC ─────────────────────────────────────────────────
+async function inicializarViewer(idx, cId, ifcPath) {
+  const container = document.getElementById(`cont_${idx}`);
+  if (!container) return;
 
-// CREAR VISOR
-function crearViewer(canvasId, xktPath)
-{
-    const viewer = new Viewer({
-        canvasId: canvasId
-    });
+  // Crear canvas dentro del container
+  const canvas = document.createElement("canvas");
+  canvas.id = cId;
+  canvas.style.cssText = "width:100%;height:100%;display:block;";
+  container.appendChild(canvas);
 
-    const loader = new XKTLoaderPlugin(viewer);
+  const viewer = new IfcViewerAPI({
+    container,
+    backgroundColor: new THREE.Color(0x080a12),
+  });
 
-    const model = loader.load({
-        src: xktPath,
-        edges: true
-    });
+  viewerInstances[cId] = viewer;
 
-    model.on("loaded", () =>
-    {
-        viewer.cameraFlight.flyTo({
-            aabb: viewer.scene.aabb
-        });
-    });
+  // Apuntar el WASM de web-ifc al CDN
+  await viewer.IFC.setWasmPath("https://unpkg.com/web-ifc@0.0.44/");
 
-    viewer.scene.input.on("mouseclicked", (coords) =>
-    {
-        const hit = viewer.scene.pick({
-            canvasPos: coords
-        });
+  try {
+    const model = await viewer.IFC.loadIfcUrl(ifcPath);
 
-        if (hit && hit.entity)
-        {
-            const ifcType = hit.entity.metaObject?.type || "No disponible";
+    // Ajustar cámara al bounding box del modelo
+    viewer.context.fitToFrame();
 
-            document.getElementById("ifcType").innerText = ifcType;
+    // Ocultar overlay de carga
+    const loadEl = document.getElementById(`load_${idx}`);
+    if (loadEl) loadEl.classList.add("hidden");
+
+    // Click → mostrar propiedades del elemento
+    container.addEventListener("click", async () => {
+      const result = await viewer.IFC.selector.pickIfcItem(true);
+      if (result) {
+        try {
+          const props = await viewer.IFC.getProperties(result.modelID, result.id, false, false);
+          document.getElementById("propIfcType").textContent = props?.type || "—";
+          document.getElementById("propNombre").textContent  = props?.Name?.value || "—";
+          document.getElementById("propId").textContent      = result.id;
+        } catch(e) {
+          document.getElementById("propId").textContent = result.id;
         }
+      }
     });
+
+  } catch (err) {
+    console.error(`[IFC] Error cargando "${ifcPath}":`, err);
+    const loadEl = document.getElementById(`load_${idx}`);
+    if (loadEl) {
+      loadEl.innerHTML = `<span style="color:#ef4444;font-size:10px;font-family:'IBM Plex Mono',monospace;text-align:center;padding:8px;">Error al cargar<br>${ifcPath.split('/').pop()}</span>`;
+    }
+  }
 }
 
+// ─── FILTRAR ────────────────────────────────────────────────────────────────
+window.filtrar = function() {
+  const codigo   = document.getElementById("filtroCodigo").value;
+  const elemento = document.getElementById("filtroElemento").value;
+  const ifcType  = document.getElementById("filtroIfcType").value;
+  const lod      = document.getElementById("filtroLOD").value;
+  renderTabla(datosGlobal.filter(item =>
+    (!codigo   || item.codigo   === codigo)   &&
+    (!elemento || item.elemento === elemento) &&
+    (!ifcType  || item.ifc_type === ifcType)  &&
+    (!lod      || item.lod      === lod)
+  ));
+};
 
-// FILTRAR
-window.filtrar = function()
-{
-    const codigo = document.getElementById("filtroCodigo").value;
-
-    const elemento = document.getElementById("filtroElemento").value;
-
-    const ifcType = document.getElementById("filtroIfcType").value;
-
-    const lod = document.getElementById("filtroLOD").value;
-
-
-    const filtrados = datosGlobal.filter(item =>
-        (!codigo || item.codigo === codigo) &&
-        (!elemento || item.elemento === elemento) &&
-        (!ifcType || item.ifc_type === ifcType) &&
-        (!lod || item.lod === lod)
-    );
-
-    renderTabla(filtrados);
-}
-
-
-// LIMPIAR FILTROS
-window.limpiarFiltros = function()
-{
-    document.getElementById("filtroCodigo").value = "";
-
-    document.getElementById("filtroElemento").value = "";
-
-    document.getElementById("filtroIfcType").value = "";
-
-    document.getElementById("filtroLOD").value = "";
-
-    renderTabla(datosGlobal);
-}
-
+window.limpiarFiltros = function() {
+  ["filtroCodigo","filtroElemento","filtroIfcType","filtroLOD"]
+    .forEach(id => document.getElementById(id).value = "");
+  renderTabla(datosGlobal);
+};
 
 iniciar();
-
 </script>
 
 </body>
