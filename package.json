@@ -1,0 +1,17 @@
+{
+  "name": "reporte-ifc-lod",
+  "version": "1.0.0",
+  "private": true,
+  "scripts": {
+    "build": "rollup -c"
+  },
+  "dependencies": {
+    "three": "^0.135.0",
+    "web-ifc-three": "^0.0.117"
+  },
+  "devDependencies": {
+    "rollup": "^3.29.4",
+    "@rollup/plugin-node-resolve": "^15.2.3",
+    "@rollup/plugin-commonjs": "^25.0.7"
+  }
+}
