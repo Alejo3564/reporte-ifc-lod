@@ -6,22 +6,18 @@
 <title>Reporte IFC LOD</title>
 <style>
   @import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;600&family=IBM+Plex+Sans:wght@300;400;600&display=swap');
-  :root {
-    --bg:#0f1117; --surface:#1a1d27; --surface2:#222636; --border:#2e3347;
-    --accent:#3b82f6; --accent2:#10b981; --text:#e2e8f0; --muted:#64748b;
-  }
+  :root{--bg:#0f1117;--surface:#1a1d27;--surface2:#222636;--border:#2e3347;--accent:#3b82f6;--accent2:#10b981;--text:#e2e8f0;--muted:#64748b}
   *{box-sizing:border-box;margin:0;padding:0}
   body{font-family:'IBM Plex Sans',sans-serif;background:var(--bg);color:var(--text);min-height:100vh}
   header{background:var(--surface);border-bottom:1px solid var(--border);padding:16px 32px;display:flex;align-items:center;gap:16px}
-  header .logo{font-family:'IBM Plex Mono',monospace;font-size:11px;color:var(--accent);letter-spacing:2px;text-transform:uppercase}
-  header h1{font-size:17px;font-weight:600;letter-spacing:-.3px}
-  header .sep{width:1px;height:22px;background:var(--border)}
+  .logo{font-family:'IBM Plex Mono',monospace;font-size:11px;color:var(--accent);letter-spacing:2px;text-transform:uppercase}
+  header h1{font-size:17px;font-weight:600}
+  .sep{width:1px;height:22px;background:var(--border)}
   .main{padding:28px 32px;max-width:1600px;margin:0 auto}
   .filtros-bar{background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:16px 20px;display:flex;flex-wrap:wrap;gap:12px;align-items:flex-end;margin-bottom:20px}
   .fg{display:flex;flex-direction:column;gap:4px}
   .fg label{font-size:10px;font-family:'IBM Plex Mono',monospace;text-transform:uppercase;letter-spacing:1px;color:var(--muted)}
   .fg select{background:var(--surface2);border:1px solid var(--border);color:var(--text);padding:7px 10px;border-radius:5px;font-size:13px;cursor:pointer;min-width:130px;outline:none}
-  .fg select:focus{border-color:var(--accent)}
   .btn-clear{background:transparent;border:1px solid var(--border);color:var(--muted);padding:7px 14px;border-radius:5px;font-size:12px;cursor:pointer}
   .btn-clear:hover{border-color:var(--accent);color:var(--accent)}
   .count{margin-left:auto;font-family:'IBM Plex Mono',monospace;font-size:12px;color:var(--muted)}
@@ -29,8 +25,7 @@
   table{border-collapse:collapse;width:100%}
   thead{background:var(--surface2);border-bottom:2px solid var(--border)}
   th{padding:12px 16px;text-align:left;font-family:'IBM Plex Mono',monospace;font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:1.5px;color:var(--muted);white-space:nowrap}
-  tbody tr{border-bottom:1px solid var(--border);transition:background .1s}
-  tbody tr:last-child{border-bottom:none}
+  tbody tr{border-bottom:1px solid var(--border)}
   tbody tr:hover{background:var(--surface2)}
   td{padding:14px 16px;font-size:13px;vertical-align:middle}
   td.cod{font-family:'IBM Plex Mono',monospace;font-size:12px;color:var(--accent)}
@@ -46,7 +41,7 @@
   .vload{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;background:#080a12;z-index:10;transition:opacity .4s}
   .vload.gone{opacity:0;pointer-events:none}
   .spin{width:22px;height:22px;border:2px solid var(--border);border-top-color:var(--accent);border-radius:50%;animation:spin .8s linear infinite}
-  .vload span{font-family:'IBM Plex Mono',monospace;font-size:10px;color:var(--muted);letter-spacing:1px}
+  .vload span{font-family:'IBM Plex Mono',monospace;font-size:10px;color:var(--muted)}
   @keyframes spin{to{transform:rotate(360deg)}}
   .props{background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:20px;margin-top:20px}
   .props h3{font-size:10px;font-family:'IBM Plex Mono',monospace;text-transform:uppercase;letter-spacing:2px;color:var(--muted);margin-bottom:14px}
@@ -68,7 +63,7 @@
 
 <div class="main">
   <div class="filtros-bar">
-    <div class="fg"><label>Código</label><select id="fCod" onchange="filtrar()"><option value="">Todos</option></select></div>
+    <div class="fg"><label>Codigo</label><select id="fCod" onchange="filtrar()"><option value="">Todos</option></select></div>
     <div class="fg"><label>Elemento</label><select id="fEle" onchange="filtrar()"><option value="">Todos</option></select></div>
     <div class="fg"><label>IFC Type</label><select id="fIfc" onchange="filtrar()"><option value="">Todos</option></select></div>
     <div class="fg"><label>LOD</label><select id="fLod" onchange="filtrar()"><option value="">Todos</option></select></div>
@@ -92,66 +87,78 @@
   </div>
 </div>
 
-<script type="importmap">
-{
-  "imports": {
-    "three": "https://cdn.jsdelivr.net/npm/three@0.152.2/build/three.module.js",
-    "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.152.2/examples/jsm/"
-  }
+<!--
+  ENFOQUE FINAL:
+  - Three.js r132 UMD global (window.THREE) desde jsDelivr — estable y verificado
+  - web-ifc-three@0.0.36 UMD bundle desde jsDelivr — compatible con Three r132
+  - web-ifc WASM @0.0.36 desde jsDelivr — versión exacta que espera web-ifc-three@0.0.36
+  - TODO UMD (no ES modules), sin importmap, sin bare specifiers
+-->
+<script src="https://cdn.jsdelivr.net/npm/three@0.132.2/build/three.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/three@0.132.2/examples/js/controls/OrbitControls.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/web-ifc-three@0.0.36/IFCLoader.js"></script>
+
+<script>
+// En UMD, IFCLoader queda en window.WebIFCThree.IFCLoader
+// y OrbitControls en window.THREE.OrbitControls
+var IFCLoader = (window.WebIFCThree && window.WebIFCThree.IFCLoader)
+             || (window.IFCLoader)
+             || (window.THREE && window.THREE.IFCLoader);
+
+var WASM_PATH = "https://cdn.jsdelivr.net/npm/web-ifc@0.0.36/";
+
+var datos    = [];
+var viewers  = {};
+
+// ── INICIAR ──────────────────────────────────────────────────────────────────
+function iniciar() {
+  fetch("./data/datos.json?v=" + Date.now())
+    .then(function(r){ return r.json(); })
+    .then(function(d){
+      datos = d;
+      llenarDropdowns();
+      renderTabla(datos);
+    });
 }
-</script>
 
-<script type="module">
-import * as THREE from "three";
-import { OrbitControls } from "three/addons/controls/OrbitControls.js";
-import { IFCLoader } from "three/addons/loaders/IFCLoader.js";
-
-const WASM_PATH = "https://cdn.jsdelivr.net/npm/web-ifc@0.0.44/";
-
-let datos = [];
-const viewers = {};
-
-async function iniciar() {
-  const r = await fetch("./data/datos.json?v=" + Date.now());
-  datos = await r.json();
-  llenarDropdowns();
-  renderTabla(datos);
-}
-
+// ── DROPDOWNS ────────────────────────────────────────────────────────────────
 function llenarDropdowns() {
-  dd("fCod", [...new Set(datos.map(x => x.codigo))]);
-  dd("fEle", [...new Set(datos.map(x => x.elemento))]);
-  dd("fIfc", [...new Set(datos.map(x => x.ifc_type))]);
-  dd("fLod", [...new Set(datos.map(x => x.lod))]);
+  dd("fCod", uniq(datos.map(function(x){ return x.codigo; })));
+  dd("fEle", uniq(datos.map(function(x){ return x.elemento; })));
+  dd("fIfc", uniq(datos.map(function(x){ return x.ifc_type; })));
+  dd("fLod", uniq(datos.map(function(x){ return x.lod; })));
 }
+function uniq(arr){ return arr.filter(function(v,i,a){ return a.indexOf(v)===i; }).sort(); }
 function dd(id, vals) {
-  const s = document.getElementById(id);
-  vals.sort().forEach(v => {
-    const o = document.createElement("option");
+  var s = document.getElementById(id);
+  vals.forEach(function(v){
+    var o = document.createElement("option");
     o.value = o.text = v;
     s.appendChild(o);
   });
 }
 
+// ── RENDER TABLA ─────────────────────────────────────────────────────────────
 function renderTabla(d) {
-  const tb = document.getElementById("tbody");
+  var tb = document.getElementById("tbody");
   document.getElementById("empty").style.display = d.length === 0 ? "block" : "none";
   document.getElementById("cnt").textContent = d.length + " elemento" + (d.length !== 1 ? "s" : "");
 
-  Object.values(viewers).forEach(v => {
-    cancelAnimationFrame(v.raf);
-    v.renderer.dispose();
+  // Limpiar viewers anteriores
+  Object.keys(viewers).forEach(function(k){
+    cancelAnimationFrame(viewers[k].raf);
+    viewers[k].renderer.dispose();
   });
-  Object.keys(viewers).forEach(k => delete viewers[k]);
+  viewers = {};
   tb.innerHTML = "";
 
   d.forEach(function(item, i) {
-    const tr = document.createElement("tr");
+    var tr = document.createElement("tr");
     tr.innerHTML =
-      "<td class='cod'>" + item.codigo + "</td>" +
-      "<td>" + item.elemento + "</td>" +
-      "<td class='itype'>" + item.ifc_type + "</td>" +
-      "<td>" + item.descripcion + "</td>" +
+      "<td class='cod'>"   + item.codigo      + "</td>" +
+      "<td>"               + item.elemento    + "</td>" +
+      "<td class='itype'>" + item.ifc_type    + "</td>" +
+      "<td>"               + item.descripcion + "</td>" +
       "<td><span class='lod lod-" + item.lod + "'>LOD " + item.lod + "</span></td>" +
       "<td class='vc'>" +
         "<div class='vbox' id='vbox_" + i + "'>" +
@@ -163,109 +170,111 @@ function renderTabla(d) {
         "</div>" +
       "</td>";
     tb.appendChild(tr);
-    setTimeout(function() { crearViewer(i, item.ifc_path); }, 100 + i * 200);
+    setTimeout(function(){ crearViewer(i, item.ifc_path); }, 100 + i * 250);
   });
 }
 
-async function crearViewer(i, ifcPath) {
-  const box    = document.getElementById("vbox_" + i);
-  const canvas = document.getElementById("cv_"   + i);
+// ── VISOR ────────────────────────────────────────────────────────────────────
+function crearViewer(i, ifcPath) {
+  var box    = document.getElementById("vbox_" + i);
+  var canvas = document.getElementById("cv_"   + i);
   if (!box || !canvas) return;
 
-  const W = box.clientWidth  || 350;
-  const H = box.clientHeight || 240;
+  var W = box.clientWidth  || 350;
+  var H = box.clientHeight || 240;
 
-  const renderer = new THREE.WebGLRenderer({ canvas: canvas, antialias: true });
+  var renderer = new THREE.WebGLRenderer({ canvas: canvas, antialias: true });
   renderer.setSize(W, H);
   renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
   renderer.setClearColor(0x080a12, 1);
 
-  const scene = new THREE.Scene();
-  scene.add(new THREE.AmbientLight(0xffffff, 0.8));
-  const dir = new THREE.DirectionalLight(0xffffff, 1.5);
+  var scene = new THREE.Scene();
+  scene.add(new THREE.AmbientLight(0xffffff, 0.9));
+  var dir = new THREE.DirectionalLight(0xffffff, 1.4);
   dir.position.set(50, 100, 50);
   scene.add(dir);
 
-  const camera = new THREE.PerspectiveCamera(45, W / H, 0.01, 100000);
+  var camera = new THREE.PerspectiveCamera(45, W / H, 0.01, 100000);
   camera.position.set(10, 10, 10);
 
-  const controls = new OrbitControls(camera, renderer.domElement);
+  var controls = new THREE.OrbitControls(camera, renderer.domElement);
   controls.enableDamping = true;
 
-  const state = { renderer: renderer, raf: null };
+  var state = { renderer: renderer, raf: null };
   viewers["cv_" + i] = state;
 
-  (function loop() {
+  (function loop(){
     state.raf = requestAnimationFrame(loop);
     controls.update();
     renderer.render(scene, camera);
   })();
 
-  const ifcLoader = new IFCLoader();
-  await ifcLoader.ifcManager.setWasmPath(WASM_PATH);
+  // Cargar IFC
+  var loader = new IFCLoader();
+  loader.ifcManager.setWasmPath(WASM_PATH).then(function(){
+    loader.load(
+      ifcPath,
+      function(model) {
+        scene.add(model);
 
-  ifcLoader.load(
-    ifcPath,
-    function(model) {
-      scene.add(model);
+        var bbox   = new THREE.Box3().setFromObject(model);
+        var center = bbox.getCenter(new THREE.Vector3());
+        var size   = bbox.getSize(new THREE.Vector3());
+        var dist   = Math.max(size.x, size.y, size.z) * 1.8;
+        camera.position.set(center.x + dist, center.y + dist * 0.7, center.z + dist);
+        controls.target.copy(center);
+        controls.update();
 
-      const bbox   = new THREE.Box3().setFromObject(model);
-      const center = bbox.getCenter(new THREE.Vector3());
-      const size   = bbox.getSize(new THREE.Vector3());
-      const dist   = Math.max(size.x, size.y, size.z) * 1.8;
-      camera.position.set(center.x + dist, center.y + dist * 0.7, center.z + dist);
-      controls.target.copy(center);
-      controls.update();
+        var vl = document.getElementById("vload_" + i);
+        if (vl) vl.classList.add("gone");
 
-      var vl = document.getElementById("vload_" + i);
-      if (vl) vl.classList.add("gone");
+        // Click para seleccionar
+        var raycaster = new THREE.Raycaster();
+        raycaster.firstHitOnly = true;
+        var mouse = new THREE.Vector2();
 
-      const raycaster = new THREE.Raycaster();
-      raycaster.firstHitOnly = true;
-      const mouse = new THREE.Vector2();
-
-      canvas.addEventListener("click", async function(e) {
-        const rect = canvas.getBoundingClientRect();
-        mouse.x = ((e.clientX - rect.left) / rect.width)  *  2 - 1;
-        mouse.y = ((e.clientY - rect.top)  / rect.height) * -2 + 1;
-        raycaster.setFromCamera(mouse, camera);
-        const hits = raycaster.intersectObjects(scene.children, true);
-        if (hits.length > 0) {
-          const hit = hits[0];
-          try {
-            const expressID = ifcLoader.ifcManager.getExpressId(hit.object.geometry, hit.faceIndex);
-            const modelID   = hit.object.modelID != null ? hit.object.modelID : 0;
-            const props     = await ifcLoader.ifcManager.getItemProperties(modelID, expressID);
-            document.getElementById("pType").textContent = props && props.type            ? props.type            : "-";
-            document.getElementById("pNom").textContent  = props && props.Name && props.Name.value ? props.Name.value : "-";
-            document.getElementById("pId").textContent   = expressID;
-          } catch(err) { console.warn(err); }
-        }
-      });
-    },
-    undefined,
-    function(err) {
-      console.error("IFC error:", ifcPath, err);
-      var vl = document.getElementById("vload_" + i);
-      if (vl) vl.innerHTML = "<span style='color:#ef4444;font-size:10px;text-align:center;padding:8px'>Error:<br>" + ifcPath.split("/").pop() + "</span>";
-    }
-  );
+        canvas.addEventListener("click", function(e) {
+          var rect = canvas.getBoundingClientRect();
+          mouse.x = ((e.clientX - rect.left) / rect.width)  *  2 - 1;
+          mouse.y = ((e.clientY - rect.top)  / rect.height) * -2 + 1;
+          raycaster.setFromCamera(mouse, camera);
+          var hits = raycaster.intersectObjects(scene.children, true);
+          if (hits.length > 0) {
+            var hit = hits[0];
+            var expressID = loader.ifcManager.getExpressId(hit.object.geometry, hit.faceIndex);
+            var modelID   = hit.object.modelID != null ? hit.object.modelID : 0;
+            loader.ifcManager.getItemProperties(modelID, expressID).then(function(props) {
+              document.getElementById("pType").textContent = (props && props.type)            ? props.type            : "-";
+              document.getElementById("pNom").textContent  = (props && props.Name && props.Name.value) ? props.Name.value : "-";
+              document.getElementById("pId").textContent   = expressID;
+            }).catch(function(){});
+          }
+        });
+      },
+      undefined,
+      function(err) {
+        console.error("Error cargando IFC:", ifcPath, err);
+        var vl = document.getElementById("vload_" + i);
+        if (vl) vl.innerHTML = "<span style='color:#ef4444;font-size:10px;text-align:center;padding:8px'>Error:<br>" + ifcPath.split("/").pop() + "</span>";
+      }
+    );
+  });
 }
 
-window.filtrar = function() {
-  const c = document.getElementById("fCod").value;
-  const e = document.getElementById("fEle").value;
-  const t = document.getElementById("fIfc").value;
-  const l = document.getElementById("fLod").value;
-  renderTabla(datos.filter(function(x) {
-    return (!c || x.codigo === c) && (!e || x.elemento === e) && (!t || x.ifc_type === t) && (!l || x.lod === l);
+// ── FILTROS ──────────────────────────────────────────────────────────────────
+function filtrar() {
+  var c = document.getElementById("fCod").value;
+  var e = document.getElementById("fEle").value;
+  var t = document.getElementById("fIfc").value;
+  var l = document.getElementById("fLod").value;
+  renderTabla(datos.filter(function(x){
+    return (!c || x.codigo===c) && (!e || x.elemento===e) && (!t || x.ifc_type===t) && (!l || x.lod===l);
   }));
-};
-
-window.limpiar = function() {
-  ["fCod","fEle","fIfc","fLod"].forEach(function(id) { document.getElementById(id).value = ""; });
+}
+function limpiar() {
+  ["fCod","fEle","fIfc","fLod"].forEach(function(id){ document.getElementById(id).value = ""; });
   renderTabla(datos);
-};
+}
 
 iniciar();
 </script>
