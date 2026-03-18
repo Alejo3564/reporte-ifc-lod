@@ -20,15 +20,8 @@
   }
 
   * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: 'IBM Plex Sans', sans-serif; background: var(--bg); color: var(--text); min-height: 100vh; }
 
-  body {
-    font-family: 'IBM Plex Sans', sans-serif;
-    background: var(--bg);
-    color: var(--text);
-    min-height: 100vh;
-  }
-
-  /* HEADER */
   header {
     background: var(--surface);
     border-bottom: 1px solid var(--border);
@@ -37,27 +30,12 @@
     align-items: center;
     gap: 16px;
   }
-  header .logo {
-    font-family: 'IBM Plex Mono', monospace;
-    font-size: 11px;
-    color: var(--accent);
-    letter-spacing: 2px;
-    text-transform: uppercase;
-  }
-  header h1 {
-    font-size: 17px;
-    font-weight: 600;
-    letter-spacing: -0.3px;
-  }
+  header .logo { font-family: 'IBM Plex Mono', monospace; font-size: 11px; color: var(--accent); letter-spacing: 2px; text-transform: uppercase; }
+  header h1 { font-size: 17px; font-weight: 600; letter-spacing: -0.3px; }
   header .sep { width: 1px; height: 22px; background: var(--border); }
 
-  .main-container {
-    padding: 28px 32px;
-    max-width: 1600px;
-    margin: 0 auto;
-  }
+  .main-container { padding: 28px 32px; max-width: 1600px; margin: 0 auto; }
 
-  /* FILTROS */
   .filtros-bar {
     background: var(--surface);
     border: 1px solid var(--border);
@@ -70,66 +48,25 @@
     margin-bottom: 20px;
   }
   .filtro-group { display: flex; flex-direction: column; gap: 4px; }
-  .filtro-group label {
-    font-size: 10px;
-    font-family: 'IBM Plex Mono', monospace;
-    text-transform: uppercase;
-    letter-spacing: 1px;
-    color: var(--text-muted);
-  }
+  .filtro-group label { font-size: 10px; font-family: 'IBM Plex Mono', monospace; text-transform: uppercase; letter-spacing: 1px; color: var(--text-muted); }
   .filtro-group select {
-    background: var(--surface2);
-    border: 1px solid var(--border);
-    color: var(--text);
-    padding: 7px 10px;
-    border-radius: 5px;
-    font-family: 'IBM Plex Sans', sans-serif;
-    font-size: 13px;
-    cursor: pointer;
-    min-width: 130px;
-    outline: none;
-    transition: border-color 0.15s;
+    background: var(--surface2); border: 1px solid var(--border); color: var(--text);
+    padding: 7px 10px; border-radius: 5px; font-family: 'IBM Plex Sans', sans-serif;
+    font-size: 13px; cursor: pointer; min-width: 130px; outline: none; transition: border-color 0.15s;
   }
   .filtro-group select:focus { border-color: var(--accent); }
   .btn-clear {
-    background: transparent;
-    border: 1px solid var(--border);
-    color: var(--text-muted);
-    padding: 7px 14px;
-    border-radius: 5px;
-    font-family: 'IBM Plex Sans', sans-serif;
-    font-size: 12px;
-    cursor: pointer;
-    transition: all 0.15s;
+    background: transparent; border: 1px solid var(--border); color: var(--text-muted);
+    padding: 7px 14px; border-radius: 5px; font-family: 'IBM Plex Sans', sans-serif;
+    font-size: 12px; cursor: pointer; transition: all 0.15s;
   }
   .btn-clear:hover { border-color: var(--accent); color: var(--accent); }
-  .count-badge {
-    margin-left: auto;
-    font-family: 'IBM Plex Mono', monospace;
-    font-size: 12px;
-    color: var(--text-muted);
-  }
+  .count-badge { margin-left: auto; font-family: 'IBM Plex Mono', monospace; font-size: 12px; color: var(--text-muted); }
 
-  /* TABLA */
-  .table-wrapper {
-    background: var(--surface);
-    border: 1px solid var(--border);
-    border-radius: 8px;
-    overflow: hidden;
-  }
+  .table-wrapper { background: var(--surface); border: 1px solid var(--border); border-radius: 8px; overflow: hidden; }
   table { border-collapse: collapse; width: 100%; }
   thead { background: var(--surface2); border-bottom: 2px solid var(--border); }
-  th {
-    padding: 12px 16px;
-    text-align: left;
-    font-family: 'IBM Plex Mono', monospace;
-    font-size: 10px;
-    font-weight: 600;
-    text-transform: uppercase;
-    letter-spacing: 1.5px;
-    color: var(--text-muted);
-    white-space: nowrap;
-  }
+  th { padding: 12px 16px; text-align: left; font-family: 'IBM Plex Mono', monospace; font-size: 10px; font-weight: 600; text-transform: uppercase; letter-spacing: 1.5px; color: var(--text-muted); white-space: nowrap; }
   tbody tr { border-bottom: 1px solid var(--border); transition: background 0.1s; }
   tbody tr:last-child { border-bottom: none; }
   tbody tr:hover { background: var(--surface2); }
@@ -137,85 +74,36 @@
   td.codigo { font-family: 'IBM Plex Mono', monospace; font-size: 12px; color: var(--accent); }
   td.ifc-type { font-family: 'IBM Plex Mono', monospace; font-size: 11px; color: var(--accent2); }
 
-  .lod-badge {
-    display: inline-block;
-    padding: 2px 8px;
-    border-radius: 3px;
-    font-family: 'IBM Plex Mono', monospace;
-    font-size: 11px;
-    font-weight: 600;
-  }
+  .lod-badge { display: inline-block; padding: 2px 8px; border-radius: 3px; font-family: 'IBM Plex Mono', monospace; font-size: 11px; font-weight: 600; }
   .lod-200 { background: rgba(245,158,11,0.12); color: #f59e0b; border: 1px solid rgba(245,158,11,0.3); }
   .lod-300 { background: rgba(16,185,129,0.12); color: #10b981; border: 1px solid rgba(16,185,129,0.3); }
   .lod-400 { background: rgba(59,130,246,0.12); color: #3b82f6; border: 1px solid rgba(59,130,246,0.3); }
   .lod-500 { background: rgba(168,85,247,0.12); color: #a855f7; border: 1px solid rgba(168,85,247,0.3); }
 
-  /* VISOR */
   .viewer-cell { width: 380px; padding: 10px 16px; }
   .viewer-container {
-    position: relative;
-    width: 350px;
-    height: 240px;
-    border-radius: 6px;
-    overflow: hidden;
-    background: #080a12;
+    position: relative; width: 350px; height: 240px;
+    border-radius: 6px; overflow: hidden; background: #080a12;
     border: 1px solid var(--border);
   }
-  .viewer-container canvas {
-    width: 100% !important;
-    height: 100% !important;
-    display: block;
-  }
+  .viewer-container canvas { width: 100% !important; height: 100% !important; display: block; }
   .viewer-loading {
-    position: absolute;
-    inset: 0;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    gap: 10px;
-    background: #080a12;
-    z-index: 10;
-    transition: opacity 0.4s;
+    position: absolute; inset: 0; display: flex; flex-direction: column;
+    align-items: center; justify-content: center; gap: 10px;
+    background: #080a12; z-index: 10; transition: opacity 0.4s;
   }
   .viewer-loading.hidden { opacity: 0; pointer-events: none; }
-  .spinner {
-    width: 22px; height: 22px;
-    border: 2px solid var(--border);
-    border-top-color: var(--accent);
-    border-radius: 50%;
-    animation: spin 0.8s linear infinite;
-  }
-  .viewer-loading span {
-    font-family: 'IBM Plex Mono', monospace;
-    font-size: 10px;
-    color: var(--text-muted);
-    letter-spacing: 1px;
-  }
+  .spinner { width: 22px; height: 22px; border: 2px solid var(--border); border-top-color: var(--accent); border-radius: 50%; animation: spin 0.8s linear infinite; }
+  .viewer-loading span { font-family: 'IBM Plex Mono', monospace; font-size: 10px; color: var(--text-muted); letter-spacing: 1px; }
   @keyframes spin { to { transform: rotate(360deg); } }
 
-  /* PANEL PROPIEDADES */
-  .props-panel {
-    background: var(--surface);
-    border: 1px solid var(--border);
-    border-radius: 8px;
-    padding: 20px;
-    margin-top: 20px;
-  }
-  .props-panel h3 {
-    font-size: 10px;
-    font-family: 'IBM Plex Mono', monospace;
-    text-transform: uppercase;
-    letter-spacing: 2px;
-    color: var(--text-muted);
-    margin-bottom: 14px;
-  }
+  .props-panel { background: var(--surface); border: 1px solid var(--border); border-radius: 8px; padding: 20px; margin-top: 20px; }
+  .props-panel h3 { font-size: 10px; font-family: 'IBM Plex Mono', monospace; text-transform: uppercase; letter-spacing: 2px; color: var(--text-muted); margin-bottom: 14px; }
   .props-grid { display: flex; gap: 32px; flex-wrap: wrap; }
   .prop-item { display: flex; flex-direction: column; gap: 4px; }
   .prop-label { font-size: 10px; font-family: 'IBM Plex Mono', monospace; color: var(--text-muted); text-transform: uppercase; letter-spacing: 1px; }
   .prop-value { font-size: 14px; font-weight: 500; }
   .prop-value.mono { font-family: 'IBM Plex Mono', monospace; color: var(--accent2); }
-
   .empty-state { padding: 48px; text-align: center; color: var(--text-muted); font-size: 13px; display: none; }
 </style>
 </head>
@@ -228,24 +116,11 @@
 </header>
 
 <div class="main-container">
-
   <div class="filtros-bar">
-    <div class="filtro-group">
-      <label>Código</label>
-      <select id="filtroCodigo" onchange="filtrar()"><option value="">Todos</option></select>
-    </div>
-    <div class="filtro-group">
-      <label>Elemento</label>
-      <select id="filtroElemento" onchange="filtrar()"><option value="">Todos</option></select>
-    </div>
-    <div class="filtro-group">
-      <label>IFC Type</label>
-      <select id="filtroIfcType" onchange="filtrar()"><option value="">Todos</option></select>
-    </div>
-    <div class="filtro-group">
-      <label>LOD</label>
-      <select id="filtroLOD" onchange="filtrar()"><option value="">Todos</option></select>
-    </div>
+    <div class="filtro-group"><label>Código</label><select id="filtroCodigo" onchange="filtrar()"><option value="">Todos</option></select></div>
+    <div class="filtro-group"><label>Elemento</label><select id="filtroElemento" onchange="filtrar()"><option value="">Todos</option></select></div>
+    <div class="filtro-group"><label>IFC Type</label><select id="filtroIfcType" onchange="filtrar()"><option value="">Todos</option></select></div>
+    <div class="filtro-group"><label>LOD</label><select id="filtroLOD" onchange="filtrar()"><option value="">Todos</option></select></div>
     <button class="btn-clear" onclick="limpiarFiltros()">✕ Limpiar</button>
     <span class="count-badge" id="countBadge"></span>
   </div>
@@ -254,12 +129,7 @@
     <table>
       <thead>
         <tr>
-          <th>Código</th>
-          <th>Elemento</th>
-          <th>IFC Type</th>
-          <th>Descripción</th>
-          <th>LOD</th>
-          <th>Modelo 3D (IFC)</th>
+          <th>Código</th><th>Elemento</th><th>IFC Type</th><th>Descripción</th><th>LOD</th><th>Modelo 3D (IFC)</th>
         </tr>
       </thead>
       <tbody id="tablaBody"></tbody>
@@ -270,38 +140,40 @@
   <div class="props-panel">
     <h3>Elemento seleccionado</h3>
     <div class="props-grid">
-      <div class="prop-item">
-        <span class="prop-label">IFC Type</span>
-        <span class="prop-value mono" id="propIfcType">—</span>
-      </div>
-      <div class="prop-item">
-        <span class="prop-label">Nombre</span>
-        <span class="prop-value" id="propNombre">—</span>
-      </div>
-      <div class="prop-item">
-        <span class="prop-label">Express ID</span>
-        <span class="prop-value" id="propId">—</span>
-      </div>
+      <div class="prop-item"><span class="prop-label">IFC Type</span><span class="prop-value mono" id="propIfcType">—</span></div>
+      <div class="prop-item"><span class="prop-label">Nombre</span><span class="prop-value" id="propNombre">—</span></div>
+      <div class="prop-item"><span class="prop-label">Express ID</span><span class="prop-value" id="propId">—</span></div>
     </div>
   </div>
-
 </div>
 
-<!-- THREE.js (peer dep de web-ifc-viewer, debe cargarse ANTES) -->
-<script src="https://unpkg.com/three@0.133.0/build/three.min.js"></script>
+<script type="importmap">
+{
+  "imports": {
+    "three": "https://unpkg.com/three@0.152.2/build/three.module.js",
+    "three/examples/jsm/controls/OrbitControls": "https://unpkg.com/three@0.152.2/examples/jsm/controls/OrbitControls.js",
+    "three/examples/jsm/loaders/GLTFLoader": "https://unpkg.com/three@0.152.2/examples/jsm/loaders/GLTFLoader.js",
+    "stats.js/src/Stats.js": "https://unpkg.com/stats.js@0.17.0/src/Stats.js"
+  }
+}
+</script>
 
 <script type="module">
+import * as THREE from "three";
+import { OrbitControls } from "three/examples/jsm/controls/OrbitControls";
 
-// ─── IMPORTAR WEB-IFC-VIEWER ────────────────────────────────────────────────
-// web-ifc-viewer es la librería de IFC.js más madura para cargar IFC en browser
-// sin necesidad de servidor ni conversión a XKT.
-import { IfcViewerAPI } from "https://unpkg.com/web-ifc-viewer@1.0.216/dist/index.js";
+// web-ifc cargado desde CDN como módulo ES
+// Usamos IfcLoader de three-stdlib para máxima compatibilidad en GitHub Pages
+// ─── Alternativa robusta: usar IFCLoader de three/addons directamente ───────
 
-// ─── ESTADO GLOBAL ──────────────────────────────────────────────────────────
+// Cargamos web-ifc-three que expone IfcLoader como ES module limpio
+const { IFCLoader } = await import("https://unpkg.com/web-ifc-three@0.0.136/IFCLoader.js");
+
+// ─── ESTADO GLOBAL ───────────────────────────────────────────────────────────
 let datosGlobal = [];
-const viewerInstances = {};
+const renderers  = {};  // id → { renderer, scene, camera, controls, animId }
 
-// ─── INICIAR ────────────────────────────────────────────────────────────────
+// ─── INICIAR ─────────────────────────────────────────────────────────────────
 async function iniciar() {
   const resp = await fetch("./data/datos.json?v=" + Date.now());
   datosGlobal = await resp.json();
@@ -309,39 +181,35 @@ async function iniciar() {
   renderTabla(datosGlobal);
 }
 
-// ─── DROPDOWNS ──────────────────────────────────────────────────────────────
+// ─── DROPDOWNS ───────────────────────────────────────────────────────────────
 function llenarDropdowns() {
   llenarDropdown("filtroCodigo",   [...new Set(datosGlobal.map(x => x.codigo))]);
   llenarDropdown("filtroElemento", [...new Set(datosGlobal.map(x => x.elemento))]);
   llenarDropdown("filtroIfcType",  [...new Set(datosGlobal.map(x => x.ifc_type))]);
   llenarDropdown("filtroLOD",      [...new Set(datosGlobal.map(x => x.lod))]);
 }
-
 function llenarDropdown(id, valores) {
   const sel = document.getElementById(id);
-  valores.sort().forEach(v => {
-    const o = document.createElement("option");
-    o.value = o.text = v;
-    sel.appendChild(o);
-  });
+  valores.sort().forEach(v => { const o = document.createElement("option"); o.value = o.text = v; sel.appendChild(o); });
 }
 
-// ─── RENDER TABLA ───────────────────────────────────────────────────────────
+// ─── RENDER TABLA ─────────────────────────────────────────────────────────────
 function renderTabla(datos) {
   const tbody = document.getElementById("tablaBody");
   document.getElementById("emptyState").style.display = datos.length === 0 ? "block" : "none";
   document.getElementById("countBadge").textContent = `${datos.length} elemento${datos.length !== 1 ? 's' : ''}`;
 
-  // Limpiar viewers anteriores
-  Object.values(viewerInstances).forEach(v => { try { v.dispose(); } catch(e){} });
-  Object.keys(viewerInstances).forEach(k => delete viewerInstances[k]);
+  // Destruir renders anteriores
+  Object.values(renderers).forEach(r => {
+    cancelAnimationFrame(r.animId);
+    r.renderer.dispose();
+  });
+  Object.keys(renderers).forEach(k => delete renderers[k]);
 
   tbody.innerHTML = "";
 
   datos.forEach((item, idx) => {
-    const cId = `viewer_${idx}`;
     const lodClass = `lod-${item.lod}`;
-
     const tr = document.createElement("tr");
     tr.innerHTML = `
       <td class="codigo">${item.codigo}</td>
@@ -351,97 +219,114 @@ function renderTabla(datos) {
       <td><span class="lod-badge ${lodClass}">LOD ${item.lod}</span></td>
       <td class="viewer-cell">
         <div class="viewer-container" id="cont_${idx}">
+          <canvas id="cv_${idx}"></canvas>
           <div class="viewer-loading" id="load_${idx}">
             <div class="spinner"></div>
             <span>Cargando IFC…</span>
           </div>
         </div>
-      </td>
-    `;
+      </td>`;
     tbody.appendChild(tr);
-
-    // Inicializar viewer con pequeño delay escalonado para no saturar GPU
-    setTimeout(() => inicializarViewer(idx, cId, item.ifc_path), 150 + idx * 120);
+    setTimeout(() => crearViewer(idx, item.ifc_path), 100 + idx * 150);
   });
 }
 
-// ─── INICIALIZAR VIEWER IFC ─────────────────────────────────────────────────
-async function inicializarViewer(idx, cId, ifcPath) {
+// ─── CREAR VIEWER THREE.js + IFCLoader ───────────────────────────────────────
+async function crearViewer(idx, ifcPath) {
   const container = document.getElementById(`cont_${idx}`);
-  if (!container) return;
+  const canvas    = document.getElementById(`cv_${idx}`);
+  if (!container || !canvas) return;
 
-  // Crear canvas dentro del container
-  const canvas = document.createElement("canvas");
-  canvas.id = cId;
-  canvas.style.cssText = "width:100%;height:100%;display:block;";
-  container.appendChild(canvas);
+  const W = container.clientWidth  || 350;
+  const H = container.clientHeight || 240;
 
-  const viewer = new IfcViewerAPI({
-    container,
-    backgroundColor: new THREE.Color(0x080a12),
-  });
+  // --- Renderer ---
+  const renderer = new THREE.WebGLRenderer({ canvas, antialias: true, alpha: false });
+  renderer.setSize(W, H);
+  renderer.setPixelRatio(window.devicePixelRatio);
+  renderer.setClearColor(0x080a12, 1);
 
-  viewerInstances[cId] = viewer;
+  // --- Scene ---
+  const scene = new THREE.Scene();
+  scene.add(new THREE.AmbientLight(0xffffff, 0.6));
+  const dirLight = new THREE.DirectionalLight(0xffffff, 1);
+  dirLight.position.set(10, 20, 10);
+  scene.add(dirLight);
 
-  // Apuntar el WASM de web-ifc al CDN
-  await viewer.IFC.setWasmPath("https://unpkg.com/web-ifc@0.0.44/");
+  // --- Camera ---
+  const camera = new THREE.PerspectiveCamera(45, W / H, 0.1, 10000);
+  camera.position.set(10, 10, 10);
 
+  // --- Controls ---
+  const controls = new OrbitControls(camera, renderer.domElement);
+  controls.enableDamping = true;
+
+  // --- IFCLoader ---
+  const ifcLoader = new IFCLoader();
+  await ifcLoader.ifcManager.setWasmPath("https://unpkg.com/web-ifc@0.0.36/");
+
+  renderers[`cv_${idx}`] = { renderer, scene, camera, controls, animId: null };
+
+  // --- Animate loop ---
+  const animate = () => {
+    renderers[`cv_${idx}`].animId = requestAnimationFrame(animate);
+    controls.update();
+    renderer.render(scene, camera);
+  };
+  animate();
+
+  // --- Cargar IFC ---
   try {
-    const model = await viewer.IFC.loadIfcUrl(ifcPath);
+    ifcLoader.load(ifcPath, (ifcModel) => {
+      scene.add(ifcModel);
 
-    // Ajustar cámara al bounding box del modelo
-    viewer.context.fitToFrame();
+      // Centrar cámara en el modelo
+      const box    = new THREE.Box3().setFromObject(ifcModel);
+      const center = box.getCenter(new THREE.Vector3());
+      const size   = box.getSize(new THREE.Vector3());
+      const maxDim = Math.max(size.x, size.y, size.z);
 
-    // Ocultar overlay de carga
-    const loadEl = document.getElementById(`load_${idx}`);
-    if (loadEl) loadEl.classList.add("hidden");
+      camera.position.copy(center).add(new THREE.Vector3(maxDim, maxDim * 0.8, maxDim));
+      controls.target.copy(center);
+      controls.update();
 
-    // Click → mostrar propiedades del elemento
-    container.addEventListener("click", async () => {
-      const result = await viewer.IFC.selector.pickIfcItem(true);
-      if (result) {
-        try {
-          const props = await viewer.IFC.getProperties(result.modelID, result.id, false, false);
-          document.getElementById("propIfcType").textContent = props?.type || "—";
-          document.getElementById("propNombre").textContent  = props?.Name?.value || "—";
-          document.getElementById("propId").textContent      = result.id;
-        } catch(e) {
-          document.getElementById("propId").textContent = result.id;
-        }
-      }
+      // Ocultar spinner
+      const loadEl = document.getElementById(`load_${idx}`);
+      if (loadEl) loadEl.classList.add("hidden");
+    },
+    undefined,  // onProgress
+    (err) => {
+      console.error(`Error IFC [${ifcPath}]:`, err);
+      mostrarError(idx, ifcPath);
     });
-
-  } catch (err) {
-    console.error(`[IFC] Error cargando "${ifcPath}":`, err);
-    const loadEl = document.getElementById(`load_${idx}`);
-    if (loadEl) {
-      loadEl.innerHTML = `<span style="color:#ef4444;font-size:10px;font-family:'IBM Plex Mono',monospace;text-align:center;padding:8px;">Error al cargar<br>${ifcPath.split('/').pop()}</span>`;
-    }
+  } catch(e) {
+    mostrarError(idx, ifcPath);
   }
 }
 
-// ─── FILTRAR ────────────────────────────────────────────────────────────────
+function mostrarError(idx, ifcPath) {
+  const loadEl = document.getElementById(`load_${idx}`);
+  if (loadEl) loadEl.innerHTML = `<span style="color:#ef4444;font-size:10px;font-family:'IBM Plex Mono',monospace;text-align:center;padding:8px;">Error al cargar<br>${ifcPath.split('/').pop()}</span>`;
+}
+
+// ─── FILTRAR / LIMPIAR ───────────────────────────────────────────────────────
 window.filtrar = function() {
-  const codigo   = document.getElementById("filtroCodigo").value;
-  const elemento = document.getElementById("filtroElemento").value;
-  const ifcType  = document.getElementById("filtroIfcType").value;
-  const lod      = document.getElementById("filtroLOD").value;
+  const c = document.getElementById("filtroCodigo").value;
+  const e = document.getElementById("filtroElemento").value;
+  const t = document.getElementById("filtroIfcType").value;
+  const l = document.getElementById("filtroLOD").value;
   renderTabla(datosGlobal.filter(item =>
-    (!codigo   || item.codigo   === codigo)   &&
-    (!elemento || item.elemento === elemento) &&
-    (!ifcType  || item.ifc_type === ifcType)  &&
-    (!lod      || item.lod      === lod)
+    (!c || item.codigo === c) && (!e || item.elemento === e) &&
+    (!t || item.ifc_type === t) && (!l || item.lod === l)
   ));
 };
 
 window.limpiarFiltros = function() {
-  ["filtroCodigo","filtroElemento","filtroIfcType","filtroLOD"]
-    .forEach(id => document.getElementById(id).value = "");
+  ["filtroCodigo","filtroElemento","filtroIfcType","filtroLOD"].forEach(id => document.getElementById(id).value = "");
   renderTabla(datosGlobal);
 };
 
 iniciar();
 </script>
-
 </body>
 </html>
