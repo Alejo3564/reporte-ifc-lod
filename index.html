@@ -87,30 +87,28 @@
   </div>
 </div>
 
-<!--
-  ENFOQUE FINAL:
-  - Three.js r132 UMD global (window.THREE) desde jsDelivr — estable y verificado
-  - web-ifc-three@0.0.36 UMD bundle desde jsDelivr — compatible con Three r132
-  - web-ifc WASM @0.0.36 desde jsDelivr — versión exacta que espera web-ifc-three@0.0.36
-  - TODO UMD (no ES modules), sin importmap, sin bare specifiers
+<!-- 
+  Versiones exactamente compatibles entre sí:
+  - three@0.135.0  (la que usa web-ifc-three como peer dep)
+  - web-ifc-three@0.0.117 (UMD → expone window.IFCLoader = { IFCLoader: ... })
+  - web-ifc@0.0.44 (la que incluye web-ifc-three@0.0.117)
 -->
-<script src="https://cdn.jsdelivr.net/npm/three@0.132.2/build/three.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/three@0.132.2/examples/js/controls/OrbitControls.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/web-ifc-three@0.0.36/IFCLoader.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/three@0.135.0/build/three.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/three@0.135.0/examples/js/controls/OrbitControls.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/web-ifc-three@0.0.117/IFCLoader.js"></script>
 
 <script>
-// En UMD, IFCLoader queda en window.WebIFCThree.IFCLoader
-// y OrbitControls en window.THREE.OrbitControls
-var IFCLoader = (window.WebIFCThree && window.WebIFCThree.IFCLoader)
-             || (window.IFCLoader)
-             || (window.THREE && window.THREE.IFCLoader);
+// El UMD de web-ifc-three@0.0.117 expone: window.IFCLoader = { IFCLoader: class }
+// Verificamos todas las posibles ubicaciones por si cambia entre versiones
+var IFCLoader = (window.IFCLoader && window.IFCLoader.IFCLoader)  // UMD normal
+             || window.IFCLoaderLib                                 // fallback
+             || (window.WebIFCThree && window.WebIFCThree.IFCLoader); // otro fallback
 
-var WASM_PATH = "https://cdn.jsdelivr.net/npm/web-ifc@0.0.36/";
+var WASM_PATH = "https://cdn.jsdelivr.net/npm/web-ifc@0.0.44/";
 
-var datos    = [];
-var viewers  = {};
+var datos   = [];
+var viewers = {};
 
-// ── INICIAR ──────────────────────────────────────────────────────────────────
 function iniciar() {
   fetch("./data/datos.json?v=" + Date.now())
     .then(function(r){ return r.json(); })
@@ -118,10 +116,10 @@ function iniciar() {
       datos = d;
       llenarDropdowns();
       renderTabla(datos);
-    });
+    })
+    .catch(function(e){ console.error("Error cargando datos.json:", e); });
 }
 
-// ── DROPDOWNS ────────────────────────────────────────────────────────────────
 function llenarDropdowns() {
   dd("fCod", uniq(datos.map(function(x){ return x.codigo; })));
   dd("fEle", uniq(datos.map(function(x){ return x.elemento; })));
@@ -138,13 +136,11 @@ function dd(id, vals) {
   });
 }
 
-// ── RENDER TABLA ─────────────────────────────────────────────────────────────
 function renderTabla(d) {
   var tb = document.getElementById("tbody");
   document.getElementById("empty").style.display = d.length === 0 ? "block" : "none";
   document.getElementById("cnt").textContent = d.length + " elemento" + (d.length !== 1 ? "s" : "");
 
-  // Limpiar viewers anteriores
   Object.keys(viewers).forEach(function(k){
     cancelAnimationFrame(viewers[k].raf);
     viewers[k].renderer.dispose();
@@ -170,15 +166,22 @@ function renderTabla(d) {
         "</div>" +
       "</td>";
     tb.appendChild(tr);
-    setTimeout(function(){ crearViewer(i, item.ifc_path); }, 100 + i * 250);
+    setTimeout(function(){ crearViewer(i, item.ifc_path); }, 100 + i * 300);
   });
 }
 
-// ── VISOR ────────────────────────────────────────────────────────────────────
 function crearViewer(i, ifcPath) {
   var box    = document.getElementById("vbox_" + i);
   var canvas = document.getElementById("cv_"   + i);
   if (!box || !canvas) return;
+
+  // Verificacion de seguridad: IFCLoader debe estar disponible
+  if (!IFCLoader) {
+    console.error("IFCLoader no disponible. window.IFCLoader =", window.IFCLoader);
+    var vl = document.getElementById("vload_" + i);
+    if (vl) vl.innerHTML = "<span style='color:#ef4444;font-size:10px;text-align:center;padding:8px'>IFCLoader no cargado</span>";
+    return;
+  }
 
   var W = box.clientWidth  || 350;
   var H = box.clientHeight || 240;
@@ -202,21 +205,18 @@ function crearViewer(i, ifcPath) {
 
   var state = { renderer: renderer, raf: null };
   viewers["cv_" + i] = state;
-
   (function loop(){
     state.raf = requestAnimationFrame(loop);
     controls.update();
     renderer.render(scene, camera);
   })();
 
-  // Cargar IFC
   var loader = new IFCLoader();
   loader.ifcManager.setWasmPath(WASM_PATH).then(function(){
     loader.load(
       ifcPath,
       function(model) {
         scene.add(model);
-
         var bbox   = new THREE.Box3().setFromObject(model);
         var center = bbox.getCenter(new THREE.Vector3());
         var size   = bbox.getSize(new THREE.Vector3());
@@ -228,11 +228,9 @@ function crearViewer(i, ifcPath) {
         var vl = document.getElementById("vload_" + i);
         if (vl) vl.classList.add("gone");
 
-        // Click para seleccionar
         var raycaster = new THREE.Raycaster();
         raycaster.firstHitOnly = true;
         var mouse = new THREE.Vector2();
-
         canvas.addEventListener("click", function(e) {
           var rect = canvas.getBoundingClientRect();
           mouse.x = ((e.clientX - rect.left) / rect.width)  *  2 - 1;
@@ -241,42 +239,53 @@ function crearViewer(i, ifcPath) {
           var hits = raycaster.intersectObjects(scene.children, true);
           if (hits.length > 0) {
             var hit = hits[0];
-            var expressID = loader.ifcManager.getExpressId(hit.object.geometry, hit.faceIndex);
-            var modelID   = hit.object.modelID != null ? hit.object.modelID : 0;
-            loader.ifcManager.getItemProperties(modelID, expressID).then(function(props) {
-              document.getElementById("pType").textContent = (props && props.type)            ? props.type            : "-";
-              document.getElementById("pNom").textContent  = (props && props.Name && props.Name.value) ? props.Name.value : "-";
-              document.getElementById("pId").textContent   = expressID;
-            }).catch(function(){});
+            try {
+              var expressID = loader.ifcManager.getExpressId(hit.object.geometry, hit.faceIndex);
+              var modelID   = (hit.object.modelID != null) ? hit.object.modelID : 0;
+              loader.ifcManager.getItemProperties(modelID, expressID).then(function(props) {
+                document.getElementById("pType").textContent = (props && props.type) ? props.type : "-";
+                document.getElementById("pNom").textContent  = (props && props.Name && props.Name.value) ? props.Name.value : "-";
+                document.getElementById("pId").textContent   = expressID;
+              });
+            } catch(e2){ console.warn(e2); }
           }
         });
       },
       undefined,
       function(err) {
-        console.error("Error cargando IFC:", ifcPath, err);
+        console.error("Error IFC:", ifcPath, err);
         var vl = document.getElementById("vload_" + i);
-        if (vl) vl.innerHTML = "<span style='color:#ef4444;font-size:10px;text-align:center;padding:8px'>Error:<br>" + ifcPath.split("/").pop() + "</span>";
+        if (vl) vl.innerHTML = "<span style='color:#ef4444;font-size:10px;text-align:center;padding:8px'>Error cargando<br>" + ifcPath.split("/").pop() + "</span>";
       }
     );
   });
 }
 
-// ── FILTROS ──────────────────────────────────────────────────────────────────
 function filtrar() {
   var c = document.getElementById("fCod").value;
   var e = document.getElementById("fEle").value;
   var t = document.getElementById("fIfc").value;
   var l = document.getElementById("fLod").value;
   renderTabla(datos.filter(function(x){
-    return (!c || x.codigo===c) && (!e || x.elemento===e) && (!t || x.ifc_type===t) && (!l || x.lod===l);
+    return (!c||x.codigo===c)&&(!e||x.elemento===e)&&(!t||x.ifc_type===t)&&(!l||x.lod===l);
   }));
 }
 function limpiar() {
-  ["fCod","fEle","fIfc","fLod"].forEach(function(id){ document.getElementById(id).value = ""; });
+  ["fCod","fEle","fIfc","fLod"].forEach(function(id){ document.getElementById(id).value=""; });
   renderTabla(datos);
 }
 
-iniciar();
+// Esperar a que todos los scripts UMD hayan cargado antes de iniciar
+window.addEventListener("load", function() {
+  // Debug: mostrar qué expone window.IFCLoader
+  console.log("window.IFCLoader:", window.IFCLoader);
+  // Re-resolver IFCLoader después de que todos los scripts cargaron
+  IFCLoader = (window.IFCLoader && window.IFCLoader.IFCLoader)
+           || window.IFCLoaderLib
+           || (window.WebIFCThree && window.WebIFCThree.IFCLoader);
+  console.log("IFCLoader resuelto:", IFCLoader);
+  iniciar();
+});
 </script>
 </body>
 </html>
