@@ -1,0 +1,47 @@
+name: Build and Deploy to GitHub Pages
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  build-deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+
+      - name: Install dependencies
+        run: npm install
+
+      - name: Build bundle
+        run: npm run build
+
+      - name: Prepare dist folder
+        run: |
+          # Copiar WASM al lado del bundle (mismo nivel, no subcarpeta)
+          cp node_modules/web-ifc/web-ifc.wasm       dist/
+          cp node_modules/web-ifc/web-ifc-mt.wasm    dist/ 2>/dev/null || true
+          cp node_modules/web-ifc/web-ifc-mt.worker.js dist/ 2>/dev/null || true
+          # Copiar assets estáticos
+          cp index.html dist/
+          cp -r data    dist/
+          cp -r models  dist/
+          # Verificar contenido del dist
+          echo "=== Contenido de dist/ ==="
+          ls -la dist/
+
+      - name: Deploy to gh-pages
+        uses: peaceiris/actions-gh-pages@v3
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_dir: ./dist
