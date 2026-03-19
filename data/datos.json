@@ -1,11 +1,11 @@
 [
   {
     "codigo": "G.03.01.01",
-    "elemento": "Building",
-    "ifc_type": "IfcBuilding",
-    "descripcion": "Edificación existente",
+    "elemento": "Especial",
+    "ifc_type": "IfcTorniquetes",
+    "descripcion": "Torniquetes",
     "lod": "300",
-    "ifc_path": "models/G.03.01.01.ifc"
+    "ifc_path": "TORNIQUETES.ifc"
   },
   {
     "codigo": "G.03.01.02",
