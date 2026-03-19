@@ -13,6 +13,6 @@
     "ifc_type": "IfcBridge",
     "descripcion": "Puentes",
     "lod": "200",
-    "ifc_path": "models/G.03.01.02.ifc"
+    "ifc_path": "models/MUROS.ifc"
   }
 ]
