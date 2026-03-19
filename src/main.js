@@ -2,7 +2,7 @@ import * as THREE from "three";
 import { OrbitControls } from "three/examples/jsm/controls/OrbitControls.js";
 import { IFCLoader } from "web-ifc-three";
 
-const WASM_PATH = "./wasm/";
+const WASM_PATH = "./";
 
 let datos = [];
 const viewers = {};
