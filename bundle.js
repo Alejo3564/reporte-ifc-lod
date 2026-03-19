@@ -90977,7 +90977,7 @@
 
 	}
 
-	const WASM_PATH = "./wasm/";
+	const WASM_PATH = "./";
 
 	let datos = [];
 	const viewers = {};
