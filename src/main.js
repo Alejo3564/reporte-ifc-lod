@@ -7,6 +7,12 @@ const WASM_PATH = "./";
 let datos = [];
 const viewers = {};
 
+// Material por defecto para elementos sin material en el IFC
+const DEFAULT_MAT = new THREE.MeshLambertMaterial({
+  color: 0xc8c8c8,
+  side: THREE.DoubleSide,
+});
+
 async function iniciar() {
   const r = await fetch("./data/datos.json?v=" + Date.now());
   datos = await r.json();
@@ -64,18 +70,24 @@ async function crearViewer(i, ifcPath) {
   renderer.setSize(W, H);
   renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
   renderer.setClearColor(0x080a12, 1);
+  renderer.shadowMap.enabled = true;
 
   const scene = new THREE.Scene();
-  scene.add(new THREE.AmbientLight(0xffffff, 0.9));
-  const dir = new THREE.DirectionalLight(0xffffff, 1.4);
+  scene.add(new THREE.AmbientLight(0xffffff, 0.7));
+  const dir = new THREE.DirectionalLight(0xffffff, 1.2);
   dir.position.set(50, 100, 50);
+  dir.castShadow = true;
   scene.add(dir);
+  const fill = new THREE.DirectionalLight(0x8899bb, 0.4);
+  fill.position.set(-30, 20, -50);
+  scene.add(fill);
 
   const camera = new THREE.PerspectiveCamera(45, W / H, 0.01, 100000);
   camera.position.set(10, 10, 10);
 
   const controls = new OrbitControls(camera, renderer.domElement);
   controls.enableDamping = true;
+  controls.dampingFactor = 0.05;
 
   const state = { renderer, raf: null };
   viewers[`cv_${i}`] = state;
@@ -87,7 +99,26 @@ async function crearViewer(i, ifcPath) {
   loader.load(
     ifcPath,
     (model) => {
+      // Reemplazar material verde por defecto con gris neutro
+      model.traverse(child => {
+        if (child.isMesh) {
+          // Conservar materiales con color definido (no el verde por defecto #00ff00)
+          if (Array.isArray(child.material)) {
+            child.material = child.material.map(m => {
+              const col = m.color;
+              // Verde brillante = sin material real → reemplazar
+              if (col && col.r < 0.1 && col.g > 0.9 && col.b < 0.1) return DEFAULT_MAT;
+              return m;
+            });
+          } else if (child.material) {
+            const col = child.material.color;
+            if (col && col.r < 0.1 && col.g > 0.9 && col.b < 0.1) child.material = DEFAULT_MAT;
+          }
+        }
+      });
+
       scene.add(model);
+
       const bbox   = new THREE.Box3().setFromObject(model);
       const center = bbox.getCenter(new THREE.Vector3());
       const size   = bbox.getSize(new THREE.Vector3());
@@ -97,6 +128,7 @@ async function crearViewer(i, ifcPath) {
       controls.update();
       document.getElementById(`vload_${i}`)?.classList.add("gone");
 
+      // Selección de elementos
       const raycaster = new THREE.Raycaster();
       raycaster.firstHitOnly = true;
       const mouse = new THREE.Vector2();
