@@ -38,5 +38,13 @@
     "descripcion": "Señales De Trafico Verticales",
     "lod": "300",
     "ifc_path": "models/IfcSign.MARKER.ifc"
+  },
+    {
+    "codigo": "H.05.05.03",
+    "elemento": "Light signals",
+    "ifc_type": "IfcSignal.VISUAL",
+    "descripcion": "Semáforos",
+    "lod": "300",
+    "ifc_path": "models/models/IfcSignal.VISUAL.ifc"
   }
 ]
