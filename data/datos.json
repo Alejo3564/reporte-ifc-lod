@@ -30,5 +30,13 @@
     "descripcion": "Muro de Concreto con geometría precisa, dimensiones exactas, ubicación, orientación y cantidad, siendo apta para la documentación de construcción y coordinación interdisciplinaria",
     "lod": "300",
     "ifc_path": "models/IfcWall.SHEAR.ifc"
+  },,
+    {
+    "codigo": "H.06.00.01",
+    "elemento": "Directional (gantry cranes, high mast, etc)",
+    "ifc_type": "IfcSign.MARKER",
+    "descripcion": "Señales De Trafico Verticales",
+    "lod": "300",
+    "ifc_path": "models/IfcSign.MARKER.ifc"
   }
 ]
