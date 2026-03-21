@@ -8,12 +8,12 @@
     "ifc_path": "models/IfcDoor.TURNSTILE.ifc"
   },
   {
-    "codigo": "G.03.01.02",
-    "elemento": "Bridge",
-    "ifc_type": "IfcBridge",
-    "descripcion": "Puentes",
+    "codigo": "G.02.05.01",
+    "elemento": "Tree",
+    "ifc_type": "IfcGeographicElement.TREE",
+    "descripcion": "Árboles",
     "lod": "200",
-    "ifc_path": "models/MUROS.ifc"
+    "ifc_path": "models/IfcGeographicElement.TREE.ifc"
   },
     {
     "codigo": "G.03.01.01",
