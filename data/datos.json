@@ -45,6 +45,6 @@
     "ifc_type": "IfcSignal.VISUAL",
     "descripcion": "Semáforos",
     "lod": "300",
-    "ifc_path": "models/models/IfcSignal.VISUAL.ifc"
+    "ifc_path": "models/IfcSignal.VISUAL.ifc"
   }
 ]
