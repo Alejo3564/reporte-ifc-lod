@@ -14,5 +14,13 @@
     "descripcion": "Puentes",
     "lod": "200",
     "ifc_path": "models/MUROS.ifc"
+  },
+    {
+    "codigo": "G.03.01.01",
+    "elemento": "Building",
+    "ifc_type": "IfcGeographicElement.BUILDING",
+    "descripcion": "Masas de las Edificaciones existentes",
+    "lod": "100",
+    "ifc_path": "models/IfcGeographicElement.BUILDING.ifc"
   }
 ]
