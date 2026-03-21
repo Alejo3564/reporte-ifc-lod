@@ -3,7 +3,7 @@
     "codigo": "D.01.01.13",
     "elemento": "Turnstiles",
     "ifc_type": "IfcDoor.TURNSTILE",
-    "descripcion": "Torniquetes",
+    "descripcion": "Representa el equipo con geometría precisa, dimensiones reales, ubicación exacta y especificaciones técnicas detalladas. El objeto está listo para la coordinación de instalaciones, detección de interferencias y extracción de cantidades",
     "lod": "300",
     "ifc_path": "models/IfcDoor.TURNSTILE.ifc"
   },
@@ -11,7 +11,7 @@
     "codigo": "G.02.05.01",
     "elemento": "Tree",
     "ifc_type": "IfcGeographicElement.TREE",
-    "descripcion": "Árboles",
+    "descripcion": "Objeto genérico o esquemático, definiendo forma, tamaño y ubicación aproximados, no definitivos. Representando un volumen estimado sin detallar especie o medidas reales sin las hojas o ramas detalladas. Contiene datos estimados como altura promedio o tipo de árbol, pero no medidas constructivas precisas.",
     "lod": "200",
     "ifc_path": "models/IfcGeographicElement.TREE.ifc"
   },
@@ -19,7 +19,7 @@
     "codigo": "G.03.01.01",
     "elemento": "Building",
     "ifc_type": "IfcGeographicElement.BUILDING",
-    "descripcion": "Masas de las Edificaciones existentes",
+    "descripcion": "Masas completa que representa las edificaciones existentes con geometría, ubicación y orientación aproximada siendo apta para la documentación y coordinación interdisciplinaria",
     "lod": "200",
     "ifc_path": "models/IfcGeographicElement.BUILDING.ifc"
   },
@@ -27,7 +27,7 @@
     "codigo": "B.01.01.01",
     "elemento": "Bearing wall",
     "ifc_type": "IfcWall.SHEAR",
-    "descripcion": "Muro De Concreto",
+    "descripcion": "Muro de Concreto con geometría precisa, dimensiones exactas, ubicación, orientación y cantidad, siendo apta para la documentación de construcción y coordinación interdisciplinaria",
     "lod": "300",
     "ifc_path": "models/IfcWall.SHEAR.ifc"
   }
