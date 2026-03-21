@@ -40400,112 +40400,6 @@
 
 	InstancedInterleavedBuffer.prototype.isInstancedInterleavedBuffer = true;
 
-	class Raycaster {
-
-		constructor( origin, direction, near = 0, far = Infinity ) {
-
-			this.ray = new Ray( origin, direction );
-			// direction is assumed to be normalized (for accurate distance calculations)
-
-			this.near = near;
-			this.far = far;
-			this.camera = null;
-			this.layers = new Layers();
-
-			this.params = {
-				Mesh: {},
-				Line: { threshold: 1 },
-				LOD: {},
-				Points: { threshold: 1 },
-				Sprite: {}
-			};
-
-		}
-
-		set( origin, direction ) {
-
-			// direction is assumed to be normalized (for accurate distance calculations)
-
-			this.ray.set( origin, direction );
-
-		}
-
-		setFromCamera( coords, camera ) {
-
-			if ( camera && camera.isPerspectiveCamera ) {
-
-				this.ray.origin.setFromMatrixPosition( camera.matrixWorld );
-				this.ray.direction.set( coords.x, coords.y, 0.5 ).unproject( camera ).sub( this.ray.origin ).normalize();
-				this.camera = camera;
-
-			} else if ( camera && camera.isOrthographicCamera ) {
-
-				this.ray.origin.set( coords.x, coords.y, ( camera.near + camera.far ) / ( camera.near - camera.far ) ).unproject( camera ); // set origin in plane of camera
-				this.ray.direction.set( 0, 0, - 1 ).transformDirection( camera.matrixWorld );
-				this.camera = camera;
-
-			} else {
-
-				console.error( 'THREE.Raycaster: Unsupported camera type: ' + camera.type );
-
-			}
-
-		}
-
-		intersectObject( object, recursive = true, intersects = [] ) {
-
-			intersectObject( object, this, intersects, recursive );
-
-			intersects.sort( ascSort );
-
-			return intersects;
-
-		}
-
-		intersectObjects( objects, recursive = true, intersects = [] ) {
-
-			for ( let i = 0, l = objects.length; i < l; i ++ ) {
-
-				intersectObject( objects[ i ], this, intersects, recursive );
-
-			}
-
-			intersects.sort( ascSort );
-
-			return intersects;
-
-		}
-
-	}
-
-	function ascSort( a, b ) {
-
-		return a.distance - b.distance;
-
-	}
-
-	function intersectObject( object, raycaster, intersects, recursive ) {
-
-		if ( object.layers.test( raycaster.layers ) ) {
-
-			object.raycast( raycaster, intersects );
-
-		}
-
-		if ( recursive === true ) {
-
-			const children = object.children;
-
-			for ( let i = 0, l = children.length; i < l; i ++ ) {
-
-				intersectObject( children[ i ], raycaster, intersects, true );
-
-			}
-
-		}
-
-	}
-
 	/**
 	 * Ref: https://en.wikipedia.org/wiki/Spherical_coordinate_system
 	 *
@@ -90979,33 +90873,22 @@
 
 	const WASM_PATH = "./";
 
-	let datos = [];
-	const viewers = {};
-
-	// Material por defecto para elementos sin material en el IFC
 	const DEFAULT_MAT = new MeshLambertMaterial({
 	  color: 0xc8c8c8,
 	  side: DoubleSide,
 	});
 
+	const viewers = {};
+
 	async function iniciar() {
 	  const r = await fetch("./data/datos.json?v=" + Date.now());
-	  datos = await r.json();
-	  llenarDropdowns();
+	  const datos = await r.json();
+	  window._datos = datos;
 	  renderTabla(datos);
 	}
 
-	function llenarDropdowns() {
-	  dd("fCod", uniq(datos.map(x => x.codigo)));
-	  dd("fEle", uniq(datos.map(x => x.elemento)));
-	  dd("fIfc", uniq(datos.map(x => x.ifc_type)));
-	  dd("fLod", uniq(datos.map(x => x.lod)));
-	}
-	function uniq(arr) { return [...new Set(arr)].sort(); }
-	function dd(id, vals) {
-	  const s = document.getElementById(id);
-	  vals.forEach(v => { const o = document.createElement("option"); o.value = o.text = v; s.appendChild(o); });
-	}
+	// Exponer renderTabla globalmente para que el HTML pueda llamarla
+	window.renderTabla = renderTabla;
 
 	function renderTabla(d) {
 	  const tb = document.getElementById("tbody");
@@ -91045,13 +90928,11 @@
 	  renderer.setSize(W, H);
 	  renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
 	  renderer.setClearColor(0x080a12, 1);
-	  renderer.shadowMap.enabled = true;
 
 	  const scene = new Scene();
 	  scene.add(new AmbientLight(0xffffff, 0.7));
 	  const dir = new DirectionalLight(0xffffff, 1.2);
 	  dir.position.set(50, 100, 50);
-	  dir.castShadow = true;
 	  scene.add(dir);
 	  const fill = new DirectionalLight(0x8899bb, 0.4);
 	  fill.position.set(-30, 20, -50);
@@ -91074,21 +90955,15 @@
 	  loader.load(
 	    ifcPath,
 	    (model) => {
-	      // Reemplazar material verde por defecto con gris neutro
+	      // Reemplazar verde por defecto con gris neutro
 	      model.traverse(child => {
 	        if (child.isMesh) {
-	          // Conservar materiales con color definido (no el verde por defecto #00ff00)
-	          if (Array.isArray(child.material)) {
-	            child.material = child.material.map(m => {
-	              const col = m.color;
-	              // Verde brillante = sin material real → reemplazar
-	              if (col && col.r < 0.1 && col.g > 0.9 && col.b < 0.1) return DEFAULT_MAT;
-	              return m;
-	            });
-	          } else if (child.material) {
-	            const col = child.material.color;
-	            if (col && col.r < 0.1 && col.g > 0.9 && col.b < 0.1) child.material = DEFAULT_MAT;
-	          }
+	          const fix = m => {
+	            const c = m?.color;
+	            return (c && c.r < 0.1 && c.g > 0.9 && c.b < 0.1) ? DEFAULT_MAT : m;
+	          };
+	          if (Array.isArray(child.material)) child.material = child.material.map(fix);
+	          else child.material = fix(child.material);
 	        }
 	      });
 
@@ -91102,29 +90977,6 @@
 	      controls.target.copy(center);
 	      controls.update();
 	      document.getElementById(`vload_${i}`)?.classList.add("gone");
-
-	      // Selección de elementos
-	      const raycaster = new Raycaster();
-	      raycaster.firstHitOnly = true;
-	      const mouse = new Vector2();
-	      canvas.addEventListener("click", async (e) => {
-	        const rect = canvas.getBoundingClientRect();
-	        mouse.x = ((e.clientX - rect.left) / rect.width)  *  2 - 1;
-	        mouse.y = ((e.clientY - rect.top)  / rect.height) * -2 + 1;
-	        raycaster.setFromCamera(mouse, camera);
-	        const hits = raycaster.intersectObjects(scene.children, true);
-	        if (hits.length > 0) {
-	          const hit = hits[0];
-	          try {
-	            const expressID = loader.ifcManager.getExpressId(hit.object.geometry, hit.faceIndex);
-	            const modelID   = hit.object.modelID ?? 0;
-	            const props     = await loader.ifcManager.getItemProperties(modelID, expressID);
-	            document.getElementById("pType").textContent = props?.type || "-";
-	            document.getElementById("pNom").textContent  = props?.Name?.value || "-";
-	            document.getElementById("pId").textContent   = expressID;
-	          } catch(e2) { console.warn(e2); }
-	        }
-	      });
 	    },
 	    undefined,
 	    (err) => {
@@ -91134,18 +90986,6 @@
 	    }
 	  );
 	}
-
-	window.filtrar = () => {
-	  const c = document.getElementById("fCod").value;
-	  const e = document.getElementById("fEle").value;
-	  const t = document.getElementById("fIfc").value;
-	  const l = document.getElementById("fLod").value;
-	  renderTabla(datos.filter(x => (!c||x.codigo===c)&&(!e||x.elemento===e)&&(!t||x.ifc_type===t)&&(!l||x.lod===l)));
-	};
-	window.limpiar = () => {
-	  ["fCod","fEle","fIfc","fLod"].forEach(id => document.getElementById(id).value = "");
-	  renderTabla(datos);
-	};
 
 	iniciar();
 
