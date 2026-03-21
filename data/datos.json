@@ -1,34 +1,210 @@
 [
-  {
-    "codigo": "D.01.01.13",
-    "elemento": "Turnstiles",
-    "ifc_type": "IfcDoor.TURNSTILE",
-    "descripcion": "Representa el equipo con geometría precisa, dimensiones reales, ubicación exacta y especificaciones técnicas detalladas. El objeto está listo para la coordinación de instalaciones, detección de interferencias y extracción de cantidades",
-    "lod": "300",
-    "ifc_path": "models/IfcDoor.TURNSTILE.ifc"
-  },
-  {
-    "codigo": "G.02.05.01",
-    "elemento": "Tree",
-    "ifc_type": "IfcGeographicElement.TREE",
-    "descripcion": "Objeto genérico o esquemático, definiendo forma, tamaño y ubicación aproximados, no definitivos. Representando un volumen estimado sin detallar especie o medidas reales sin las hojas o ramas detalladas. Contiene datos estimados como altura promedio o tipo de árbol, pero no medidas constructivas precisas.",
-    "lod": "200",
-    "ifc_path": "models/IfcGeographicElement.TREE.ifc"
-  },
-    {
-    "codigo": "G.03.01.01",
-    "elemento": "Building",
-    "ifc_type": "IfcGeographicElement.BUILDING",
-    "descripcion": "Masas completa que representa las edificaciones existentes con geometría, ubicación y orientación aproximada siendo apta para la documentación y coordinación interdisciplinaria",
-    "lod": "200",
-    "ifc_path": "models/IfcGeographicElement.BUILDING.ifc"
-  },
-    {
-    "codigo": "B.01.01.01",
-    "elemento": "Bearing wall",
-    "ifc_type": "IfcWall.SHEAR",
-    "descripcion": "Muro de Concreto con geometría precisa, dimensiones exactas, ubicación, orientación y cantidad, siendo apta para la documentación de construcción y coordinación interdisciplinaria",
-    "lod": "300",
-    "ifc_path": "models/IfcWall.SHEAR.ifc"
-  }
+{
+"codigo": "G.03.01.01",
+"elemento": "Building",
+"ifc_type": "IfcGeographicElement.BUILDING",
+"descripcion": "Masas de las Edificaciones existentes",
+"lod": "200",
+"ifc_path": "models/IfcGeographicElement.BUILDING.ifc",
+"link": "https://identifier.buildingsmart.org/uri/buildingsmart/ifc/4.3/class/IfcGeographicElement"
+},
+{
+"codigo": "G.02.05.01",
+"elemento": "Tree",
+"ifc_type": "IfcGeographicElement.TREE",
+"descripcion": "Árboles",
+"lod": "200",
+"ifc_path": "models/IfcGeographicElement.TREE.ifc",
+"link": "https://identifier.buildingsmart.org/uri/buildingsmart/ifc/4.3/class/IfcGeographicElement"
+},
+{
+"codigo": "G.02.01.01",
+"elemento": "Topography",
+"ifc_type": "IfcGeographicElement.TERRAIN",
+"descripcion": "Superficie Topográfica TIN",
+"lod": "200",
+"ifc_path": "models/IfcGeographicElement.TERRAIN.ifc",
+"link": "https://identifier.buildingsmart.org/uri/buildingsmart/ifc/4.3/class/IfcGeographicElement"
+},
+{
+"codigo": "I.02.04.01",
+"elemento": "Label",
+"ifc_type": "IfcAnnotation.TEXT",
+"descripcion": "Toponimia o Textos de Calles Principales",
+"lod": "100",
+"ifc_path": "models/IfcAnnotation.TEXT.ifc",
+"link": "https://identifier.buildingsmart.org/uri/buildingsmart/ifc/4.3/class/IfcAnnotation"
+},
+{
+"codigo": "H.01.01.01",
+"elemento": "Axis",
+"ifc_type": "IfcAlignment",
+"descripcion": "Alineamiento",
+"lod": "200",
+"ifc_path": "models/IfcAlignment.ifc",
+"link": "https://identifier.buildingsmart.org/uri/buildingsmart/ifc/4.3/class/IfcAlignment"
+},
+{
+"codigo": "H.01.08.04",
+"elemento": "Rail",
+"ifc_type": "IfcRailwayPart.RAIL",
+"descripcion": "Rieles",
+"lod": "200",
+"ifc_path": "models/IfcRailwayPart.RAIL.ifc",
+"link": "https://identifier.buildingsmart.org/uri/buildingsmart/ifc/4.3/class/IfcRailwayPart"
+},
+{
+"codigo": "H.01.08.08.01",
+"elemento": "Monoblock concrete Tie",
+"ifc_type": "IfcRailwayPart.TIE",
+"descripcion": "Traviesas",
+"lod": "200",
+"ifc_path": "models/IfcRailwayPart.TIE.ifc",
+"link": "https://identifier.buildingsmart.org/uri/buildingsmart/ifc/4.3/class/IfcRailwayPart"
+},
+{
+"codigo": "A.04.04.03",
+"elemento": "Select fill material",
+"ifc_type": "IfcEarthworksFill.SUBGRADE",
+"descripcion": "Rellenos",
+"lod": "200",
+"ifc_path": "models/IfcEarthworksFill.SUBGRADE.ifc",
+"link": "https://identifier.buildingsmart.org/uri/buildingsmart/ifc/4.3/class/IfcEarthworksFill"
+},
+{
+"codigo": "A.04.04.01",
+"elemento": "Mechanical excavations",
+"ifc_type": "IfcEarthworksCut.CUT",
+"descripcion": "Excavaciones",
+"lod": "200",
+"ifc_path": "models/IfcEarthworksCut.CUT.ifc",
+"link": ""
+},
+{
+"codigo": "H.02.01.01",
+"elemento": "Wearing layer",
+"ifc_type": "IfcCourse.PAVEMENT",
+"descripcion": "Pavimentos",
+"lod": "300",
+"ifc_path": "models/IfcCourse.PAVEMENT.ifc",
+"link": ""
+},
+{
+"codigo": "H.02.01.03",
+"elemento": "Base layer",
+"ifc_type": "IfcCourse.BASE",
+"descripcion": "Bases",
+"lod": "300",
+"ifc_path": "models/IfcCourse.BASE.ifc",
+"link": ""
+},
+{
+"codigo": "H.02.01.07",
+"elemento": "SubBase layer",
+"ifc_type": "IfcCourse.SUBBASE",
+"descripcion": "Subbases",
+"lod": "300",
+"ifc_path": "models/IfcCourse.SUBBASE.ifc",
+"link": ""
+},
+{
+"codigo": "H.06.00.01",
+"elemento": "Directional (gantry cranes, high mast, etc.)",
+"ifc_type": "IfcSign.MARKER",
+"descripcion": "Señales De Trafico Verticales",
+"lod": "300",
+"ifc_path": "models/IfcSign.MARKER.ifc",
+"link": "https://identifier.buildingsmart.org/uri/buildingsmart/ifc/4.3/class/IfcSignal"
+},
+{
+"codigo": "H.06.00.03",
+"elemento": "Lines",
+"ifc_type": "IfcSurfaceFeature.LINEMARKING",
+"descripcion": "Pintura de Tráfico O Señalización Horizontal",
+"lod": "200",
+"ifc_path": "models/IfcSurfaceFeature.LINEMARKING.ifc",
+"link": ""
+},
+{
+"codigo": "H.06.00.04",
+"elemento": "Special markings",
+"ifc_type": "IfcSurfaceFeature.SYMBOLMARKING",
+"descripcion": "Pintura de Tráfico Símbolos varios",
+"lod": "200",
+"ifc_path": "models/IfcSurfaceFeature.SYMBOLMARKING.ifc",
+"link": ""
+},
+{
+"codigo": "H.05.05.03",
+"elemento": "Light signals",
+"ifc_type": "IfcSignal.VISUAL",
+"descripcion": "Semáforos",
+"lod": "200",
+"ifc_path": "models/IfcSignal.VISUAL.ifc",
+"link": "https://identifier.buildingsmart.org/uri/buildingsmart/ifc/4.3/class/IfcSignal"
+},
+{
+"codigo": "G.04.01.01",
+"elemento": "Pipe",
+"ifc_type": "IfcPipeSegment.RIGIDSEGMENT",
+"descripcion": "Tuberia De Acueducto",
+"lod": "200",
+"ifc_path": "models/IfcPipeSegment.RIGIDSEGMENT.ifc",
+"link": ""
+},
+{
+"codigo": "G.04.01.16",
+"elemento": "Connection",
+"ifc_type": "IfcPipeFitting.CONNECTOR",
+"descripcion": "Accesorios De Tuberias De Acueducto",
+"lod": "200",
+"ifc_path": "models/IfcPipeFitting.CONNECTOR.ifc",
+"link": ""
+},
+{
+"codigo": "G.04.05.01",
+"elemento": "Valve",
+"ifc_type": "IfcValve.ISOLATING",
+"descripcion": "Valvulas De Acueducto",
+"lod": "200",
+"ifc_path": "models/IfcValve.ISOLATING.ifc",
+"link": ""
+},
+{
+"codigo": "G.04.07.01",
+"elemento": "Pump",
+"ifc_type": "IfcPump.SUMPPUMP",
+"descripcion": "Equipos De Bombeo De Acueducto",
+"lod": "200",
+"ifc_path": "models/IfcPump.SUMPPUMP.ifc",
+"link": ""
+},
+{
+"codigo": "G.04.08.01",
+"elemento": "Pipe",
+"ifc_type": "IfcPipeSegment.RIGIDSEGMENT",
+"descripcion": "Tuberias",
+"lod": "200",
+"ifc_path": "models/IfcPipeSegment.RIGIDSEGMENT.ifc",
+"link": ""
+},
+{
+"codigo": "G.04.08.02",
+"elemento": "Manhole",
+"ifc_type": "IfcDistributionChamberElement.MANHOLE",
+"descripcion": "Pozos",
+"lod": "200",
+"ifc_path": "models/IfcDistributionChamberElement.MANHOLE.ifc",
+"link": ""
+},
+{
+"codigo": "G.04.08.03",
+"elemento": "Storm drain",
+"ifc_type": "IfcDistributionChamberElement.SUMP",
+"descripcion": "Rejillas o sumideros",
+"lod": "200",
+"ifc_path": "models/IfcDistributionChamberElement.SUMP.ifc",
+"link": ""
+}
+
 ]
