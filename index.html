@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Reporte IFC LOD</title>
+<title>Nivel de Desarrollo LOD</title>
 <style>
   @import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;600&family=IBM+Plex+Sans:wght@300;400;600&display=swap');
   :root{--bg:#0f1117;--surface:#1a1d27;--surface2:#222636;--border:#2e3347;--accent:#3b82f6;--accent2:#10b981;--text:#e2e8f0;--muted:#64748b}
@@ -14,13 +14,42 @@
   header h1{font-size:17px;font-weight:600}
   .sep{width:1px;height:22px;background:var(--border)}
   .main{padding:28px 32px;max-width:1600px;margin:0 auto}
+
+  /* FILTROS CON BÚSQUEDA */
   .filtros-bar{background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:16px 20px;display:flex;flex-wrap:wrap;gap:12px;align-items:flex-end;margin-bottom:20px}
-  .fg{display:flex;flex-direction:column;gap:4px}
+  .fg{display:flex;flex-direction:column;gap:4px;position:relative}
   .fg label{font-size:10px;font-family:'IBM Plex Mono',monospace;text-transform:uppercase;letter-spacing:1px;color:var(--muted)}
-  .fg select{background:var(--surface2);border:1px solid var(--border);color:var(--text);padding:7px 10px;border-radius:5px;font-size:13px;cursor:pointer;min-width:130px;outline:none}
+
+  /* Input de búsqueda con dropdown */
+  .fg .search-input{
+    background:var(--surface2);border:1px solid var(--border);color:var(--text);
+    padding:7px 10px;border-radius:5px;font-size:13px;min-width:160px;outline:none;
+    font-family:'IBM Plex Sans',sans-serif;
+  }
+  .fg .search-input:focus{border-color:var(--accent)}
+  .fg .search-input::placeholder{color:var(--muted)}
+
+  /* Dropdown de opciones */
+  .dropdown{
+    position:absolute;top:100%;left:0;right:0;
+    background:var(--surface2);border:1px solid var(--accent);border-top:none;
+    border-radius:0 0 5px 5px;max-height:200px;overflow-y:auto;
+    z-index:1000;display:none;
+  }
+  .dropdown.open{display:block}
+  .dropdown-item{
+    padding:7px 10px;font-size:13px;cursor:pointer;color:var(--text);
+    border-bottom:1px solid var(--border);
+  }
+  .dropdown-item:last-child{border-bottom:none}
+  .dropdown-item:hover,.dropdown-item.selected{background:var(--accent);color:#fff}
+  .dropdown-item.reset{color:var(--muted);font-style:italic}
+
   .btn-clear{background:transparent;border:1px solid var(--border);color:var(--muted);padding:7px 14px;border-radius:5px;font-size:12px;cursor:pointer}
   .btn-clear:hover{border-color:var(--accent);color:var(--accent)}
   .count{margin-left:auto;font-family:'IBM Plex Mono',monospace;font-size:12px;color:var(--muted)}
+
+  /* TABLA */
   .table-wrapper{background:var(--surface);border:1px solid var(--border);border-radius:8px;overflow:hidden}
   table{border-collapse:collapse;width:100%}
   thead{background:var(--surface2);border-bottom:2px solid var(--border)}
@@ -43,13 +72,6 @@
   .spin{width:22px;height:22px;border:2px solid var(--border);border-top-color:var(--accent);border-radius:50%;animation:spin .8s linear infinite}
   .vload span{font-family:'IBM Plex Mono',monospace;font-size:10px;color:var(--muted)}
   @keyframes spin{to{transform:rotate(360deg)}}
-  .props{background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:20px;margin-top:20px}
-  .props h3{font-size:10px;font-family:'IBM Plex Mono',monospace;text-transform:uppercase;letter-spacing:2px;color:var(--muted);margin-bottom:14px}
-  .pg{display:flex;gap:32px;flex-wrap:wrap}
-  .pi{display:flex;flex-direction:column;gap:4px}
-  .pl{font-size:10px;font-family:'IBM Plex Mono',monospace;color:var(--muted);text-transform:uppercase;letter-spacing:1px}
-  .pv{font-size:14px;font-weight:500}
-  .pv.m{font-family:'IBM Plex Mono',monospace;color:var(--accent2)}
   .empty{padding:48px;text-align:center;color:var(--muted);font-size:13px;display:none}
 </style>
 </head>
@@ -57,17 +79,34 @@
 <header>
   <div class="logo">BIM Smart Tools</div>
   <div class="sep"></div>
-  <h1>Reporte LOD — Objetos IFC</h1>
+  <h1>Nivel de Desarrollo LOD</h1>
 </header>
 <div class="main">
   <div class="filtros-bar">
-    <div class="fg"><label>Codigo</label><select id="fCod" onchange="filtrar()"><option value="">Todos</option></select></div>
-    <div class="fg"><label>Elemento</label><select id="fEle" onchange="filtrar()"><option value="">Todos</option></select></div>
-    <div class="fg"><label>IFC Type</label><select id="fIfc" onchange="filtrar()"><option value="">Todos</option></select></div>
-    <div class="fg"><label>LOD</label><select id="fLod" onchange="filtrar()"><option value="">Todos</option></select></div>
-    <button class="btn-clear" onclick="limpiar()">x Limpiar</button>
+    <div class="fg" id="fg-cod">
+      <label>Codigo</label>
+      <input class="search-input" id="fCod" type="text" placeholder="Buscar..." autocomplete="off" oninput="onSearch('cod')" onfocus="openDrop('cod')" onblur="closeDrop('cod')">
+      <div class="dropdown" id="drop-cod"></div>
+    </div>
+    <div class="fg" id="fg-ele">
+      <label>Elemento</label>
+      <input class="search-input" id="fEle" type="text" placeholder="Buscar..." autocomplete="off" oninput="onSearch('ele')" onfocus="openDrop('ele')" onblur="closeDrop('ele')">
+      <div class="dropdown" id="drop-ele"></div>
+    </div>
+    <div class="fg" id="fg-ifc">
+      <label>IFC Type</label>
+      <input class="search-input" id="fIfc" type="text" placeholder="Buscar..." autocomplete="off" oninput="onSearch('ifc')" onfocus="openDrop('ifc')" onblur="closeDrop('ifc')">
+      <div class="dropdown" id="drop-ifc"></div>
+    </div>
+    <div class="fg" id="fg-lod">
+      <label>LOD</label>
+      <input class="search-input" id="fLod" type="text" placeholder="Buscar..." autocomplete="off" oninput="onSearch('lod')" onfocus="openDrop('lod')" onblur="closeDrop('lod')">
+      <div class="dropdown" id="drop-lod"></div>
+    </div>
+    <button class="btn-clear" onclick="limpiar()">✕ Limpiar</button>
     <span class="count" id="cnt"></span>
   </div>
+
   <div class="table-wrapper">
     <table>
       <thead><tr><th>Codigo</th><th>Elemento</th><th>IFC Type</th><th>Descripcion</th><th>LOD</th><th>Modelo 3D (IFC)</th></tr></thead>
@@ -75,15 +114,90 @@
     </table>
     <div class="empty" id="empty">No hay resultados.</div>
   </div>
-  <div class="props">
-    <h3>Elemento seleccionado</h3>
-    <div class="pg">
-      <div class="pi"><span class="pl">IFC Type</span><span class="pv m" id="pType">-</span></div>
-      <div class="pi"><span class="pl">Nombre</span><span class="pv" id="pNom">-</span></div>
-      <div class="pi"><span class="pl">Express ID</span><span class="pv" id="pId">-</span></div>
-    </div>
-  </div>
 </div>
+
+<script>
+// ── Lógica de filtros con búsqueda ────────────────────────────────────────────
+const FILTROS = {
+  cod: { inputId: 'fCod', dropId: 'drop-cod', field: 'codigo',   value: '' },
+  ele: { inputId: 'fEle', dropId: 'drop-ele', field: 'elemento', value: '' },
+  ifc: { inputId: 'fIfc', dropId: 'drop-ifc', field: 'ifc_type', value: '' },
+  lod: { inputId: 'fLod', dropId: 'drop-lod', field: 'lod',      value: '' },
+};
+
+function buildDropdown(key, searchTerm) {
+  const f    = FILTROS[key];
+  const drop = document.getElementById(f.dropId);
+  const vals = [...new Set(window._datos.map(x => x[f.field]))].sort();
+  const term = searchTerm.toLowerCase();
+  const filtered = vals.filter(v => v.toLowerCase().includes(term));
+
+  drop.innerHTML = '';
+  // Opción "Todos"
+  const all = document.createElement('div');
+  all.className = 'dropdown-item reset';
+  all.textContent = 'Todos';
+  all.onmousedown = () => selectVal(key, '');
+  drop.appendChild(all);
+
+  filtered.forEach(v => {
+    const el = document.createElement('div');
+    el.className = 'dropdown-item' + (f.value === v ? ' selected' : '');
+    el.textContent = v;
+    el.onmousedown = () => selectVal(key, v);
+    drop.appendChild(el);
+  });
+}
+
+function selectVal(key, val) {
+  const f = FILTROS[key];
+  f.value = val;
+  document.getElementById(f.inputId).value = val;
+  document.getElementById(f.dropId).classList.remove('open');
+  filtrar();
+}
+
+window.onSearch = function(key) {
+  const f    = FILTROS[key];
+  const term = document.getElementById(f.inputId).value;
+  f.value = '';  // al escribir, se limpia el filtro hasta seleccionar
+  buildDropdown(key, term);
+  document.getElementById(f.dropId).classList.add('open');
+  filtrar();
+};
+
+window.openDrop = function(key) {
+  const f = FILTROS[key];
+  buildDropdown(key, document.getElementById(f.inputId).value);
+  document.getElementById(f.dropId).classList.add('open');
+};
+
+window.closeDrop = function(key) {
+  // Pequeño delay para que el onmousedown del item se procese antes
+  setTimeout(() => {
+    document.getElementById(FILTROS[key].dropId).classList.remove('open');
+    // Restaurar texto al valor seleccionado
+    document.getElementById(FILTROS[key].inputId).value = FILTROS[key].value;
+  }, 150);
+};
+
+window.filtrar = function() {
+  if (!window._datos) return;
+  const result = window._datos.filter(x =>
+    Object.values(FILTROS).every(f => !f.value || x[f.field] === f.value)
+  );
+  renderTabla(result);
+};
+
+window.limpiar = function() {
+  Object.keys(FILTROS).forEach(k => {
+    FILTROS[k].value = '';
+    document.getElementById(FILTROS[k].inputId).value = '';
+  });
+  renderTabla(window._datos);
+};
+</script>
+
 <script src="bundle.js"></script>
 </body>
 </html>
