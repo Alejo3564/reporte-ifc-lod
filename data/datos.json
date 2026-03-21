@@ -22,5 +22,13 @@
     "descripcion": "Masas de las Edificaciones existentes",
     "lod": "100",
     "ifc_path": "models/IfcGeographicElement.BUILDING.ifc"
+  },
+    {
+    "codigo": "A.01.04.06",
+    "elemento": "Retaining wall",
+    "ifc_type": "IfcWall.RETAININGWALL",
+    "descripcion": "Muros De Contención",
+    "lod": "300",
+    "ifc_path": "models/IfcWall.RETAININGWALL.ifc"
   }
 ]
