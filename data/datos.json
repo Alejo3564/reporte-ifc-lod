@@ -29,6 +29,6 @@
     "ifc_type": "IfcWall.SHEAR",
     "descripcion": "Muro De Concreto",
     "lod": "200",
-    "ifc_path": "models/models/IfcWall.SHEAR.ifc"
+    "ifc_path": "models/IfcWall.SHEAR.ifc"
   }
 ]
