@@ -24,11 +24,11 @@
     "ifc_path": "models/IfcGeographicElement.BUILDING.ifc"
   },
     {
-    "codigo": "A.01.04.06",
-    "elemento": "Retaining wall",
-    "ifc_type": "IfcWall.RETAININGWALL",
-    "descripcion": "Muros De Contención",
-    "lod": "300",
-    "ifc_path": "models/IfcWall.RETAININGWALL.ifc"
+    "codigo": "B.01.01.01",
+    "elemento": "Bearing wall",
+    "ifc_type": "IfcWall.SHEAR",
+    "descripcion": "Muro De Concreto",
+    "lod": "200",
+    "ifc_path": "models/models/IfcWall.SHEAR.ifc"
   }
 ]
