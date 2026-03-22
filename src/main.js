@@ -1,28 +1,14 @@
 import * as THREE from "three";
-import { OrbitControls } from "three/examples/jsm/controls/OrbitControls.js";
-import { IFCLoader } from "web-ifc-three";
+import * as OBC  from "@thatopen/components";
 
-const WASM_PATH = "./";
-
-const DEFAULT_MAT = new THREE.MeshLambertMaterial({
-  color: 0xc8c8c8,
-  side: THREE.DoubleSide,
-});
-
-// Material para cuando el IFC no tiene geometría parseable
-const ERROR_MAT = new THREE.MeshLambertMaterial({
-  color: 0x334155,
-  side: THREE.DoubleSide,
-  wireframe: false,
-});
-
+// ─── ESTADO ──────────────────────────────────────────────────────────────────
 let datos = [];
-const viewers = {};
+const viewers = {};  // key → { components, world, renderer }
 
-// Cola de carga — máximo 4 viewers simultáneos para no saturar WebGL contexts
-const loadQueue = [];
+// Cola: máx 3 conversiones IFC simultáneas (son pesadas en CPU)
+const loadQueue   = [];
 let activeLoaders = 0;
-const MAX_CONCURRENT = 4;
+const MAX_CONCURRENT = 3;
 
 const FILTROS = [
   { field: "codigo",   inputId: "fCod", dropId: "drop-cod", val: "" },
@@ -30,6 +16,9 @@ const FILTROS = [
   { field: "ifc_type", inputId: "fIfc", dropId: "drop-ifc", val: "" },
   { field: "lod",      inputId: "fLod", dropId: "drop-lod", val: "" },
 ];
+
+// ─── WASM PATH (web-ifc copiado a raíz por rollup) ───────────────────────────
+const WASM_PATH = "./";
 
 // ─── INICIAR ─────────────────────────────────────────────────────────────────
 async function iniciar() {
@@ -92,8 +81,12 @@ function renderTabla(d) {
   document.getElementById("empty").style.display = d.length === 0 ? "block" : "none";
   document.getElementById("cnt").textContent = `${d.length} elemento${d.length !== 1 ? "s" : ""}`;
 
-  // Destruir viewers y limpiar cola
-  Object.values(viewers).forEach(v => { cancelAnimationFrame(v.raf); v.renderer.dispose(); });
+  // Limpiar viewers anteriores
+  Object.values(viewers).forEach(v => {
+    try {
+      v.components.dispose();
+    } catch(e) {}
+  });
   Object.keys(viewers).forEach(k => delete viewers[k]);
   loadQueue.length = 0;
   activeLoaders = 0;
@@ -105,9 +98,7 @@ function renderTabla(d) {
            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
              <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/>
              <polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/>
-           </svg>
-           bSDD IFC
-         </a>`
+           </svg>bSDD IFC</a>`
       : `<span style="color:var(--muted);font-size:12px">—</span>`;
 
     const tr = document.createElement("tr");
@@ -119,127 +110,147 @@ function renderTabla(d) {
       `<td><span class="lod lod-${item.lod}">LOD ${item.lod}</span></td>` +
       `<td>${linkHtml}</td>` +
       `<td class="vc"><div class="vbox" id="vbox_${i}">` +
-        `<canvas id="cv_${i}"></canvas>` +
         `<div class="vload" id="vload_${i}"><div class="spin"></div><span>Cargando IFC...</span></div>` +
       `</div></td>`;
     tb.appendChild(tr);
-
-    // Encolar en lugar de setTimeout directo
-    loadQueue.push({ i, ifcPath: item.ifc_path });
+    loadQueue.push({ i, item });
   });
 
-  // Arrancar la cola
   processQueue();
 }
 
-// ─── COLA DE CARGA ────────────────────────────────────────────────────────────
+// ─── COLA ────────────────────────────────────────────────────────────────────
 function processQueue() {
   while (activeLoaders < MAX_CONCURRENT && loadQueue.length > 0) {
-    const { i, ifcPath } = loadQueue.shift();
+    const task = loadQueue.shift();
     activeLoaders++;
-    crearViewer(i, ifcPath).finally(() => {
+    crearViewer(task.i, task.item).finally(() => {
       activeLoaders--;
-      processQueue(); // cargar el siguiente cuando termine uno
+      processQueue();
     });
   }
 }
 
-// ─── VIEWER ──────────────────────────────────────────────────────────────────
-async function crearViewer(i, ifcPath) {
-  const box    = document.getElementById(`vbox_${i}`);
-  const canvas = document.getElementById(`cv_${i}`);
-  if (!box || !canvas) return;
+// ─── VIEWER con @thatopen/components ─────────────────────────────────────────
+async function crearViewer(i, item) {
+  const container = document.getElementById(`vbox_${i}`);
+  if (!container) return;
 
-  const W = box.clientWidth  || 350;
-  const H = box.clientHeight || 240;
+  const W = container.clientWidth  || 350;
+  const H = container.clientHeight || 240;
 
-  const renderer = new THREE.WebGLRenderer({ canvas, antialias: true });
-  renderer.setSize(W, H);
-  renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
-  renderer.setClearColor(0x080a12, 1);
+  // 1. Crear instancia de Components (cada viewer tiene la suya)
+  const components = new OBC.Components();
 
-  const scene = new THREE.Scene();
-  scene.add(new THREE.AmbientLight(0xffffff, 0.7));
-  const dir = new THREE.DirectionalLight(0xffffff, 1.2);
+  // 2. Crear el mundo (world = scene + renderer + camera)
+  const worlds = components.get(OBC.Worlds);
+  const world  = worlds.create();
+
+  // Scene
+  world.scene = new OBC.SimpleScene(components);
+  world.scene.setup();
+  world.scene.three.background = new THREE.Color(0x080a12);
+
+  // Renderer — lo atamos al container div
+  world.renderer = new OBC.SimpleRenderer(components, container);
+  world.renderer.three.setSize(W, H);
+  world.renderer.three.setClearColor(0x080a12, 1);
+
+  // Camera
+  world.camera = new OBC.SimpleCamera(components);
+  world.camera.three.position.set(10, 10, 10);
+
+  // Luces
+  const ambient = new THREE.AmbientLight(0xffffff, 0.8);
+  const dir     = new THREE.DirectionalLight(0xffffff, 1.2);
   dir.position.set(50, 100, 50);
-  scene.add(dir);
-  const fill = new THREE.DirectionalLight(0x8899bb, 0.4);
+  const fill    = new THREE.DirectionalLight(0x8899bb, 0.4);
   fill.position.set(-30, 20, -50);
-  scene.add(fill);
+  world.scene.three.add(ambient, dir, fill);
 
-  const camera = new THREE.PerspectiveCamera(45, W / H, 0.01, 100000);
-  camera.position.set(10, 10, 10);
+  // Arrancar el loop de render
+  components.init();
 
-  const controls = new OrbitControls(camera, renderer.domElement);
-  controls.enableDamping = true;
-  controls.dampingFactor = 0.05;
+  viewers[`v_${i}`] = { components, world };
 
-  const state = { renderer, raf: null };
-  viewers[`cv_${i}`] = state;
-  (function loop() {
-    state.raf = requestAnimationFrame(loop);
-    controls.update();
-    renderer.render(scene, camera);
-  })();
-
-  const loader = new IFCLoader();
-  await loader.ifcManager.setWasmPath(WASM_PATH);
-
-  return new Promise((resolve) => {
-    loader.load(
-      ifcPath,
-      (model) => {
-        // Reemplazar verde brillante por gris, y capturar geometrías vacías
-        let hasGeometry = false;
-        model.traverse(child => {
-          if (!child.isMesh) return;
-          // Verificar que la geometría tiene índices válidos
-          if (child.geometry && child.geometry.index && child.geometry.index.count > 0) {
-            hasGeometry = true;
-            const fix = m => {
-              const c = m?.color;
-              return (c && c.r < 0.1 && c.g > 0.9 && c.b < 0.1) ? DEFAULT_MAT : m;
-            };
-            if (Array.isArray(child.material)) child.material = child.material.map(fix);
-            else child.material = fix(child.material);
-          } else {
-            // Geometría vacía o inválida — asignar placeholder
-            child.material = ERROR_MAT;
-          }
-        });
-
-        scene.add(model);
-
-        if (hasGeometry) {
-          const bbox   = new THREE.Box3().setFromObject(model);
-          const center = bbox.getCenter(new THREE.Vector3());
-          const size   = bbox.getSize(new THREE.Vector3());
-          const dist   = Math.max(size.x, size.y, size.z) * 1.8;
-          camera.position.set(center.x + dist, center.y + dist * 0.7, center.z + dist);
-          controls.target.copy(center);
-          controls.update();
-        }
-
-        document.getElementById(`vload_${i}`)?.classList.add("gone");
-        resolve();
-      },
-      undefined,
-      (err) => {
-        console.error("Error IFC:", ifcPath, err.message || err);
-        const vl = document.getElementById(`vload_${i}`);
-        // Distinguir 404 de error de parseo
-        const msg = String(err).includes("404")
-          ? `Modelo no<br>disponible`
-          : `Error de<br>geometría`;
-        if (vl) vl.innerHTML =
-          `<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#64748b" stroke-width="1.5" style="margin-bottom:6px">
-            <path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/>
-          </svg>
-          <span style="color:#64748b;font-size:10px;text-align:center;font-family:'IBM Plex Mono',monospace">${msg}</span>`;
-        resolve();
-      }
-    );
+  // 3. Configurar IFC Loader
+  const ifcLoader = components.get(OBC.IfcLoader);
+  await ifcLoader.setup({
+    autoSetWasm: false,
+    wasm: {
+      path:     WASM_PATH,
+      absolute: false,
+    },
   });
+
+  // 4. Cargar el IFC como ArrayBuffer
+  try {
+    const resp = await fetch(item.ifc_path);
+    if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
+
+    const buffer = await resp.arrayBuffer();
+    const data   = new Uint8Array(buffer);
+
+    // load() devuelve un FragmentsGroup (modelo ya en la escena del world)
+    const model = await ifcLoader.load(data);
+    world.scene.three.add(model);
+
+    // Ajustar cámara al bounding box del modelo
+    const bbox = new THREE.Box3().setFromObject(model);
+    if (!bbox.isEmpty()) {
+      const center = bbox.getCenter(new THREE.Vector3());
+      const size   = bbox.getSize(new THREE.Vector3());
+      const dist   = Math.max(size.x, size.y, size.z) * 1.8;
+
+      world.camera.three.position.set(
+        center.x + dist,
+        center.y + dist * 0.7,
+        center.z + dist
+      );
+
+      // SimpleCamera expone controls (OrbitControls interno)
+      if (world.camera.controls) {
+        world.camera.controls.setLookAt(
+          center.x + dist, center.y + dist * 0.7, center.z + dist,
+          center.x, center.y, center.z
+        );
+      }
+    }
+
+    document.getElementById(`vload_${i}`)?.classList.add("gone");
+
+  } catch(err) {
+    console.warn(`Error cargando ${item.ifc_path}:`, err.message || err);
+    mostrarPlaceholder(i, item.ifc_type);
+    try { components.dispose(); } catch(e) {}
+    delete viewers[`v_${i}`];
+  }
+}
+
+// ─── PLACEHOLDER ─────────────────────────────────────────────────────────────
+function mostrarPlaceholder(i, ifcType) {
+  const vload = document.getElementById(`vload_${i}`);
+  const box   = document.getElementById(`vbox_${i}`);
+  if (!vload) return;
+
+  let icon = `<circle cx="12" cy="12" r="8" stroke-width="1.2"/>`;
+  if (/rail/i.test(ifcType))   icon = `<path d="M4 6h16M4 18h16M8 6v12M16 6v12" stroke-width="1.5"/>`;
+  if (/sign$/i.test(ifcType))  icon = `<path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5" stroke-width="1.2"/>`;
+  if (/signal/i.test(ifcType)) icon = `<circle cx="12" cy="6" r="3"/><circle cx="12" cy="14" r="3"/><line x1="12" y1="2" x2="12" y2="22" stroke-width="1"/>`;
+  if (/course/i.test(ifcType)) icon = `<rect x="2" y="8" width="20" height="4" rx="1"/><rect x="2" y="14" width="20" height="4" rx="1"/>`;
+  if (/wall/i.test(ifcType))   icon = `<rect x="3" y="4" width="18" height="16" rx="1"/><line x1="3" y1="10" x2="21" y2="10"/><line x1="12" y1="4" x2="12" y2="20"/>`;
+  if (/door/i.test(ifcType))   icon = `<rect x="4" y="2" width="12" height="20" rx="1"/><circle cx="14" cy="12" r="1.5"/>`;
+  if (/geo/i.test(ifcType))    icon = `<path d="M3 17l4-8 4 5 3-3 4 6H3z"/><circle cx="17" cy="7" r="2"/>`;
+
+  vload.innerHTML = `
+    <svg width="36" height="36" viewBox="0 0 24 24" fill="none"
+         stroke="#3b82f6" stroke-linecap="round" stroke-linejoin="round"
+         style="opacity:.5;margin-bottom:8px">${icon}</svg>
+    <span style="color:#475569;font-size:9px;font-family:'IBM Plex Mono',monospace;
+                 text-align:center;letter-spacing:.5px;line-height:1.6">
+      MODELO NO<br>DISPONIBLE
+    </span>`;
+  if (box) box.style.background = "#0d1120";
 }
 
 iniciar();
