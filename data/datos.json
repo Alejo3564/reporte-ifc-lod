@@ -1,42 +1,101 @@
 [
   {
-    "codigo": "D.01.01.13",
-    "elemento": "Turnstiles",
-    "ifc_type": "IfcDoor.TURNSTILE",
-    "descripcion": "Representa el equipo con geometría precisa, dimensiones reales, ubicación exacta y especificaciones técnicas detalladas. El objeto está listo para la coordinación de instalaciones, detección de interferencias y extracción de cantidades",
-    "lod": "300",
-    "ifc_path": "models/IfcDoor.TURNSTILE.ifc"
+    "codigo": "G.03.01.01",
+    "elemento": "Building",
+    "ifc_type": "IfcGeographicElement.BUILDING",
+    "descripcion": "Edificaciones: Masas completa que representa las edificaciones existentes con geometría, ubicación y orientación aproximada siendo apta para la documentación y coordinación interdisciplinaria",
+    "lod": "200",
+    "ifc_path": "models/IfcGeographicElement.BUILDING.ifc",
+    "link": "https://identifier.buildingsmart.org/uri/buildingsmart/ifc/4.3/class/IfcGeographicElement"
   },
   {
     "codigo": "G.02.05.01",
     "elemento": "Tree",
     "ifc_type": "IfcGeographicElement.TREE",
-    "descripcion": "Objeto genérico o esquemático, definiendo forma, tamaño y ubicación aproximados, no definitivos. Representando un volumen estimado sin detallar especie o medidas reales sin las hojas o ramas detalladas. Contiene datos estimados como altura promedio o tipo de árbol, pero no medidas constructivas precisas.",
+    "descripcion": "Árboles: Objeto genérico o esquemático, definiendo forma, tamaño y ubicación aproximados, no definitivos. Representando un volumen estimado sin detallar especie o medidas reales sin las hojas o ramas detalladas. Contiene datos estimados como altura promedio o tipo de árbol, pero no medidas constructivas precisas.",
     "lod": "200",
-    "ifc_path": "models/IfcGeographicElement.TREE.ifc"
+    "ifc_path": "models/IfcGeographicElement.TREE.ifc",
+    "link": "https://identifier.buildingsmart.org/uri/buildingsmart/ifc/4.3/class/IfcGeographicElement"
   },
-    {
-    "codigo": "G.03.01.01",
-    "elemento": "Building",
-    "ifc_type": "IfcGeographicElement.BUILDING",
-    "descripcion": "Masas completa que representa las edificaciones existentes con geometría, ubicación y orientación aproximada siendo apta para la documentación y coordinación interdisciplinaria",
+  {
+    "codigo": "G.02.01.01",
+    "elemento": "Topography",
+    "ifc_type": "IfcGeographicElement.TERRAIN",
+    "descripcion": "Superficie Topográfica TIN: representa el terreno con geometría precisa, ubicación exacta y dimensiones correctas, basada en datos de topografía o nubes de puntos. Se utiliza para modelar superficies finales, excavaciones y taludes.",
     "lod": "200",
-    "ifc_path": "models/IfcGeographicElement.BUILDING.ifc"
+    "ifc_path": "models/IfcGeographicElement.TERRAIN.ifc",
+    "link": "https://identifier.buildingsmart.org/uri/buildingsmart/ifc/4.3/class/IfcGeographicElementTERRAIN"
   },
-    {
+  {
+    "codigo": "H.01.08.04",
+    "elemento": "Rail",
+    "ifc_type": "IfcRailwayPart.RAIL",
+    "descripcion": "Rieles",
+    "lod": "200",
+    "ifc_path": "models/IfcRailwayPart.RAIL.ifc",
+    "link": "https://identifier.buildingsmart.org/uri/buildingsmart/ifc/4.3/class/IfcRailwayPart"
+  },
+  {
+    "codigo": "H.06.00.01",
+    "elemento": "Directional (gantry cranes, high mast, etc.)",
+    "ifc_type": "IfcSign.MARKER",
+    "descripcion": "Señales De Trafico Verticales",
+    "lod": "300",
+    "ifc_path": "models/IfcSign.MARKER.ifc",
+    "link": "https://identifier.buildingsmart.org/uri/buildingsmart/ifc/4.3/class/IfcSignMARKER"
+  },
+  {
+    "codigo": "H.05.05.03",
+    "elemento": "Light signals",
+    "ifc_type": "IfcSignal.VISUAL",
+    "descripcion": "Semáforos",
+    "lod": "200",
+    "ifc_path": "models/IfcSignal.VISUAL.ifc",
+    "link": "https://identifier.buildingsmart.org/uri/buildingsmart/ifc/4.3/class/IfcSignalVISUAL"
+  },
+  {
     "codigo": "B.01.01.01",
     "elemento": "Bearing wall",
     "ifc_type": "IfcWall.SHEAR",
     "descripcion": "Muro de Concreto con geometría precisa, dimensiones exactas, ubicación, orientación y cantidad, siendo apta para la documentación de construcción y coordinación interdisciplinaria",
     "lod": "300",
-    "ifc_path": "models/IfcWall.SHEAR.ifc"
+    "ifc_path": "models/IfcWall.SHEAR.ifc",
+    "link": "https://identifier.buildingsmart.org/uri/buildingsmart/ifc/4.3/class/IfcWall"
   },
-    {
-    "codigo": "H.06.00.01",
-    "elemento": "Directional (gantry cranes, high mast, etc)",
-    "ifc_type": "IfcSign.MARKER",
-    "descripcion": "Señales De Trafico Verticales",
+  {
+    "codigo": "D.01.01.13",
+    "elemento": "Turnstiles",
+    "ifc_type": "IfcDoor.TURNSTILE",
+    "descripcion": "Torniquetes:Representa el equipo con geometría precisa, dimensiones reales, ubicación exacta y especificaciones técnicas detalladas. El objeto está listo para la coordinación de instalaciones, detección de interferencias y extracción de cantidades",
     "lod": "300",
-    "ifc_path": "models/IfcSign.MARKER.ifc"
+    "ifc_path": "models/IfcDoor.TURNSTILE.ifc",
+    "link": "https://identifier.buildingsmart.org/uri/buildingsmart/ifc/4.3/class/IfcDoorTURNSTILE"
+  },
+  {
+    "codigo": "H.01.08.01",
+    "elemento": "Ballast layer",
+    "ifc_type": "IfcCourse.BALLASTBED",
+    "descripcion": "Balastro linea ferrea",
+    "lod": "300",
+    "ifc_path": "models/IfcCourse.BALLASTBED.ifc",
+    "link": "https://identifier.buildingsmart.org/uri/buildingsmart/ifc/4.3/class/IfcCourseBALLASTBED"
+  },
+  {
+    "codigo": "H.01.08.07",
+    "elemento": "SubBallast layer",
+    "ifc_type": "IfcCourse.SUBBALLASTBED",
+    "descripcion": "Subbalastro linea ferrea",
+    "lod": "300",
+    "ifc_path": "models/IfcCourse.SUBBALLASTBED.ifc",
+    "link": "https://identifier.buildingsmart.org/uri/buildingsmart/ifc/4.3/class/IfcCourse"
+  },
+  {
+    "codigo": "H.01.08.09",
+    "elemento": "Granular Filter",
+    "ifc_type": "IfcCourse.FILTER",
+    "descripcion": "Base filter",
+    "lod": "300",
+    "ifc_path": "models/IfcCourse.FILTER.ifc",
+    "link": "https://identifier.buildingsmart.org/uri/buildingsmart/ifc/4.3/class/IfcCourseFILTER"
   }
 ]
