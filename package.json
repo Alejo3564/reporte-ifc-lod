@@ -6,9 +6,9 @@
     "build": "rollup -c"
   },
   "dependencies": {
-    "three": "^0.175.0",
-    "@thatopen/components": "^3.3.1",
-    "@thatopen/fragments": "^3.3.6"
+    "three": "0.175.0",
+    "@thatopen/components": "3.3.1",
+    "@thatopen/fragments": "3.3.6"
   },
   "devDependencies": {
     "rollup": "^4.24.0",
