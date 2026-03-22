@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Nivel de Desarrollo LOG</title>
+<title>Reporte IFC LOD</title>
 <style>
   @import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;600&family=IBM+Plex+Sans:wght@300;400;600&display=swap');
   :root{--bg:#0f1117;--surface:#1a1d27;--surface2:#222636;--border:#2e3347;--accent:#3b82f6;--accent2:#10b981;--text:#e2e8f0;--muted:#64748b}
@@ -15,17 +15,9 @@
   .sep{width:1px;height:22px;background:var(--border)}
   .main{padding:28px 32px;max-width:1600px;margin:0 auto}
   .filtros-bar{background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:16px 20px;display:flex;flex-wrap:wrap;gap:12px;align-items:flex-end;margin-bottom:20px}
-  .fg{display:flex;flex-direction:column;gap:4px;position:relative}
+  .fg{display:flex;flex-direction:column;gap:4px}
   .fg label{font-size:10px;font-family:'IBM Plex Mono',monospace;text-transform:uppercase;letter-spacing:1px;color:var(--muted)}
-  .fg .si{background:var(--surface2);border:1px solid var(--border);color:var(--text);padding:7px 10px;border-radius:5px;font-size:13px;min-width:160px;outline:none;font-family:'IBM Plex Sans',sans-serif;}
-  .fg .si:focus{border-color:var(--accent)}
-  .fg .si::placeholder{color:var(--muted)}
-  .drop{position:absolute;top:calc(100% + 2px);left:0;right:0;background:var(--surface2);border:1px solid var(--accent);border-radius:5px;max-height:220px;overflow-y:auto;z-index:9999;display:none;box-shadow:0 8px 24px rgba(0,0,0,.5)}
-  .drop.open{display:block}
-  .di{padding:7px 10px;font-size:13px;cursor:pointer;color:var(--text);border-bottom:1px solid var(--border)}
-  .di:last-child{border-bottom:none}
-  .di:hover,.di.sel{background:var(--accent);color:#fff}
-  .di.rst{color:var(--muted);font-style:italic}
+  .fg select{background:var(--surface2);border:1px solid var(--border);color:var(--text);padding:7px 10px;border-radius:5px;font-size:13px;cursor:pointer;min-width:130px;outline:none}
   .btn-clear{background:transparent;border:1px solid var(--border);color:var(--muted);padding:7px 14px;border-radius:5px;font-size:12px;cursor:pointer}
   .btn-clear:hover{border-color:var(--accent);color:var(--accent)}
   .count{margin-left:auto;font-family:'IBM Plex Mono',monospace;font-size:12px;color:var(--muted)}
@@ -43,10 +35,6 @@
   .lod-300{background:rgba(16,185,129,.12);color:#10b981;border:1px solid rgba(16,185,129,.3)}
   .lod-400{background:rgba(59,130,246,.12);color:#3b82f6;border:1px solid rgba(59,130,246,.3)}
   .lod-500{background:rgba(168,85,247,.12);color:#a855f7;border:1px solid rgba(168,85,247,.3)}
-  /* Link bSDD */
-  .bsdd-link{display:inline-flex;align-items:center;gap:5px;padding:4px 10px;border-radius:4px;font-size:11px;font-family:'IBM Plex Mono',monospace;font-weight:600;color:#fff;background:linear-gradient(135deg,#1d4ed8,#2563eb);text-decoration:none;border:1px solid rgba(59,130,246,.4);white-space:nowrap;transition:opacity .15s}
-  .bsdd-link:hover{opacity:.8}
-  .bsdd-link svg{flex-shrink:0}
   .vc{width:380px;padding:10px 16px}
   .vbox{position:relative;width:350px;height:240px;border-radius:6px;overflow:hidden;background:#080a12;border:1px solid var(--border)}
   .vbox canvas{width:100%!important;height:100%!important;display:block}
@@ -55,6 +43,13 @@
   .spin{width:22px;height:22px;border:2px solid var(--border);border-top-color:var(--accent);border-radius:50%;animation:spin .8s linear infinite}
   .vload span{font-family:'IBM Plex Mono',monospace;font-size:10px;color:var(--muted)}
   @keyframes spin{to{transform:rotate(360deg)}}
+  .props{background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:20px;margin-top:20px}
+  .props h3{font-size:10px;font-family:'IBM Plex Mono',monospace;text-transform:uppercase;letter-spacing:2px;color:var(--muted);margin-bottom:14px}
+  .pg{display:flex;gap:32px;flex-wrap:wrap}
+  .pi{display:flex;flex-direction:column;gap:4px}
+  .pl{font-size:10px;font-family:'IBM Plex Mono',monospace;color:var(--muted);text-transform:uppercase;letter-spacing:1px}
+  .pv{font-size:14px;font-weight:500}
+  .pv.m{font-family:'IBM Plex Mono',monospace;color:var(--accent2)}
   .empty{padding:48px;text-align:center;color:var(--muted);font-size:13px;display:none}
 </style>
 </head>
@@ -62,49 +57,31 @@
 <header>
   <div class="logo">BIM Smart Tools</div>
   <div class="sep"></div>
-  <h1>Nivel de Desarrollo LOG</h1>
+  <h1>Reporte LOD — Objetos IFC</h1>
 </header>
 <div class="main">
   <div class="filtros-bar">
-    <div class="fg">
-      <label>Codigo</label>
-      <input class="si" id="fCod" type="text" placeholder="Buscar..." autocomplete="off">
-      <div class="drop" id="drop-cod"></div>
-    </div>
-    <div class="fg">
-      <label>Elemento</label>
-      <input class="si" id="fEle" type="text" placeholder="Buscar..." autocomplete="off">
-      <div class="drop" id="drop-ele"></div>
-    </div>
-    <div class="fg">
-      <label>IFC Type</label>
-      <input class="si" id="fIfc" type="text" placeholder="Buscar..." autocomplete="off">
-      <div class="drop" id="drop-ifc"></div>
-    </div>
-    <div class="fg">
-      <label>LOD</label>
-      <input class="si" id="fLod" type="text" placeholder="Buscar..." autocomplete="off">
-      <div class="drop" id="drop-lod"></div>
-    </div>
-    <button class="btn-clear" id="btnLimpiar">✕ Limpiar</button>
+    <div class="fg"><label>Codigo</label><select id="fCod" onchange="filtrar()"><option value="">Todos</option></select></div>
+    <div class="fg"><label>Elemento</label><select id="fEle" onchange="filtrar()"><option value="">Todos</option></select></div>
+    <div class="fg"><label>IFC Type</label><select id="fIfc" onchange="filtrar()"><option value="">Todos</option></select></div>
+    <div class="fg"><label>LOD</label><select id="fLod" onchange="filtrar()"><option value="">Todos</option></select></div>
+    <button class="btn-clear" onclick="limpiar()">x Limpiar</button>
     <span class="count" id="cnt"></span>
   </div>
   <div class="table-wrapper">
     <table>
-      <thead>
-        <tr>
-          <th>Codigo</th>
-          <th>Elemento</th>
-          <th>IFC Type</th>
-          <th>Descripcion</th>
-          <th>LOD</th>
-          <th>bSDD</th>
-          <th>Modelo 3D (IFC)</th>
-        </tr>
-      </thead>
+      <thead><tr><th>Codigo</th><th>Elemento</th><th>IFC Type</th><th>Descripcion</th><th>LOD</th><th>Modelo 3D (IFC)</th></tr></thead>
       <tbody id="tbody"></tbody>
     </table>
     <div class="empty" id="empty">No hay resultados.</div>
+  </div>
+  <div class="props">
+    <h3>Elemento seleccionado</h3>
+    <div class="pg">
+      <div class="pi"><span class="pl">IFC Type</span><span class="pv m" id="pType">-</span></div>
+      <div class="pi"><span class="pl">Nombre</span><span class="pv" id="pNom">-</span></div>
+      <div class="pi"><span class="pl">Express ID</span><span class="pv" id="pId">-</span></div>
+    </div>
   </div>
 </div>
 <script src="bundle.js"></script>
