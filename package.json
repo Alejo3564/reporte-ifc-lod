@@ -8,7 +8,8 @@
   "dependencies": {
     "three": "0.175.0",
     "@thatopen/components": "3.3.1",
-    "@thatopen/fragments": "3.3.6"
+    "@thatopen/fragments": "3.3.6",
+    "web-ifc": "0.0.68"
   },
   "devDependencies": {
     "rollup": "^4.24.0",
