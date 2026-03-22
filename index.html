@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Nivel de Desarrollo LOD</title>
+<title>Nivel de Desarrollo LOG</title>
 <style>
   @import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;600&family=IBM+Plex+Sans:wght@300;400;600&display=swap');
   :root{--bg:#0f1117;--surface:#1a1d27;--surface2:#222636;--border:#2e3347;--accent:#3b82f6;--accent2:#10b981;--text:#e2e8f0;--muted:#64748b}
@@ -43,6 +43,10 @@
   .lod-300{background:rgba(16,185,129,.12);color:#10b981;border:1px solid rgba(16,185,129,.3)}
   .lod-400{background:rgba(59,130,246,.12);color:#3b82f6;border:1px solid rgba(59,130,246,.3)}
   .lod-500{background:rgba(168,85,247,.12);color:#a855f7;border:1px solid rgba(168,85,247,.3)}
+  /* Link bSDD */
+  .bsdd-link{display:inline-flex;align-items:center;gap:5px;padding:4px 10px;border-radius:4px;font-size:11px;font-family:'IBM Plex Mono',monospace;font-weight:600;color:#fff;background:linear-gradient(135deg,#1d4ed8,#2563eb);text-decoration:none;border:1px solid rgba(59,130,246,.4);white-space:nowrap;transition:opacity .15s}
+  .bsdd-link:hover{opacity:.8}
+  .bsdd-link svg{flex-shrink:0}
   .vc{width:380px;padding:10px 16px}
   .vbox{position:relative;width:350px;height:240px;border-radius:6px;overflow:hidden;background:#080a12;border:1px solid var(--border)}
   .vbox canvas{width:100%!important;height:100%!important;display:block}
@@ -58,7 +62,7 @@
 <header>
   <div class="logo">BIM Smart Tools</div>
   <div class="sep"></div>
-  <h1>Nivel de Desarrollo LOD</h1>
+  <h1>Nivel de Desarrollo LOG</h1>
 </header>
 <div class="main">
   <div class="filtros-bar">
@@ -87,13 +91,22 @@
   </div>
   <div class="table-wrapper">
     <table>
-      <thead><tr><th>Codigo</th><th>Elemento</th><th>IFC Type</th><th>Descripcion</th><th>LOD</th><th>Modelo 3D (IFC)</th></tr></thead>
+      <thead>
+        <tr>
+          <th>Codigo</th>
+          <th>Elemento</th>
+          <th>IFC Type</th>
+          <th>Descripcion</th>
+          <th>LOD</th>
+          <th>bSDD</th>
+          <th>Modelo 3D (IFC)</th>
+        </tr>
+      </thead>
       <tbody id="tbody"></tbody>
     </table>
     <div class="empty" id="empty">No hay resultados.</div>
   </div>
 </div>
-<!-- bundle.js inicializa todo, incluyendo los filtros -->
 <script src="bundle.js"></script>
 </body>
 </html>
