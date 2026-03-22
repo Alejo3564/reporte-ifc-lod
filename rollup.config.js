@@ -6,7 +6,7 @@ export default {
   input: "src/main.js",
   output: {
     file:   "dist/bundle.js",
-    format: "es",           // ES module — compatible con @thatopen
+    format: "es",
     inlineDynamicImports: true,
   },
   plugins: [
@@ -14,9 +14,13 @@ export default {
       browser: true,
       preferBuiltins: false,
       exportConditions: ["browser", "module", "default"],
+      // Forzar que web-ifc se resuelva desde node_modules
+      dedupe: ["three", "web-ifc"],
     }),
     commonjs({
       transformMixedEsModules: true,
+      // Incluir web-ifc aunque tenga require() dinámico
+      include: /node_modules/,
     }),
     copy({
       targets: [
@@ -26,7 +30,6 @@ export default {
       hook: "writeBundle",
     }),
   ],
-  // Suprimir warnings de circular deps en librerías externas
   onwarn(warning, warn) {
     if (warning.code === "CIRCULAR_DEPENDENCY") return;
     if (warning.code === "THIS_IS_UNDEFINED") return;
