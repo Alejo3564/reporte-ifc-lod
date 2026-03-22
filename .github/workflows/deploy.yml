@@ -21,16 +21,18 @@ jobs:
           node-version: "20"
 
       - name: Install dependencies
-        run: npm install
+        run: npm install --legacy-peer-deps
 
       - name: Build bundle
         run: npm run build
 
       - name: Prepare dist folder
         run: |
-          # WASM viene de @thatopen/fragments (no de web-ifc directamente)
-          cp node_modules/@thatopen/fragments/resources/*.wasm dist/ 2>/dev/null || true
-          # Fallback: también intentar desde web-ifc por si acaso
+          # Worker de @thatopen/fragments (requerido para procesar IFC en background)
+          mkdir -p dist
+          cp node_modules/@thatopen/fragments/dist/Worker/worker.mjs dist/ 2>/dev/null || true
+          # WASM de web-ifc (dentro de @thatopen/fragments o directo)
+          cp node_modules/@thatopen/fragments/dist/*.wasm dist/ 2>/dev/null || true
           cp node_modules/web-ifc/*.wasm dist/ 2>/dev/null || true
           # Assets estáticos
           cp index.html dist/
