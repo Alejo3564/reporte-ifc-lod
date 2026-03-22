@@ -28,17 +28,17 @@ jobs:
 
       - name: Prepare dist folder
         run: |
-          # Worker de @thatopen/fragments (requerido para procesar IFC en background)
           mkdir -p dist
-          cp node_modules/@thatopen/fragments/dist/Worker/worker.mjs dist/ 2>/dev/null || true
-          # WASM de web-ifc (dentro de @thatopen/fragments o directo)
-          cp node_modules/@thatopen/fragments/dist/*.wasm dist/ 2>/dev/null || true
-          cp node_modules/web-ifc/*.wasm dist/ 2>/dev/null || true
-          # Assets estáticos
+          # Worker de @thatopen/fragments
+          find node_modules/@thatopen/fragments -name "worker.mjs" -exec cp {} dist/ \; 2>/dev/null || true
+          # WASM files
+          find node_modules -name "*.wasm" -path "*/web-ifc/*" -exec cp {} dist/ \; 2>/dev/null || true
+          find node_modules/@thatopen/fragments -name "*.wasm" -exec cp {} dist/ \; 2>/dev/null || true
+          # Assets
           cp index.html dist/
           cp -r data    dist/
           cp -r models  dist/
-          echo "=== Contenido de dist/ ===" && ls -la dist/
+          echo "=== dist/ ===" && ls -la dist/
 
       - name: Deploy to gh-pages
         uses: peaceiris/actions-gh-pages@v3
