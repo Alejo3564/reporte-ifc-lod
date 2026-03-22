@@ -66464,11 +66464,14 @@ ${colorTags}
 	 */
 	__publicField(_MeasurementUtils, "uuid", "267ca032-672f-4cb0-afa9-d24e904f39d6");
 
+	// ─── WASM y Worker path (copiados a raíz por deploy.yml) ─────────────────────
+	const WORKER_URL = "./worker.mjs";
+	const WASM_PATH  = "./";
+
 	// ─── ESTADO ──────────────────────────────────────────────────────────────────
 	let datos = [];
-	const viewers = {};  // key → { components, world, renderer }
+	const viewers = {};
 
-	// Cola: máx 3 conversiones IFC simultáneas (son pesadas en CPU)
 	const loadQueue   = [];
 	let activeLoaders = 0;
 	const MAX_CONCURRENT = 3;
@@ -66479,9 +66482,6 @@ ${colorTags}
 	  { field: "ifc_type", inputId: "fIfc", dropId: "drop-ifc", val: "" },
 	  { field: "lod",      inputId: "fLod", dropId: "drop-lod", val: "" },
 	];
-
-	// ─── WASM PATH (web-ifc copiado a raíz por rollup) ───────────────────────────
-	const WASM_PATH = "./";
 
 	// ─── INICIAR ─────────────────────────────────────────────────────────────────
 	async function iniciar() {
@@ -66546,9 +66546,7 @@ ${colorTags}
 
 	  // Limpiar viewers anteriores
 	  Object.values(viewers).forEach(v => {
-	    try {
-	      v.components.dispose();
-	    } catch(e) {}
+	    try { v.components.dispose(); } catch(e) {}
 	  });
 	  Object.keys(viewers).forEach(k => delete viewers[k]);
 	  loadQueue.length = 0;
@@ -66594,7 +66592,7 @@ ${colorTags}
 	  }
 	}
 
-	// ─── VIEWER con @thatopen/components ─────────────────────────────────────────
+	// ─── VIEWER ──────────────────────────────────────────────────────────────────
 	async function crearViewer(i, item) {
 	  const container = document.getElementById(`vbox_${i}`);
 	  if (!container) return;
@@ -66602,91 +66600,73 @@ ${colorTags}
 	  const W = container.clientWidth  || 350;
 	  const H = container.clientHeight || 240;
 
-	  // 1. Crear instancia de Components (cada viewer tiene la suya)
-	  const components = new Components();
-
-	  // 2. Crear el mundo (world = scene + renderer + camera)
-	  const worlds = components.get(Worlds);
-	  const world  = worlds.create();
-
-	  // Scene
-	  world.scene = new SimpleScene(components);
-	  world.scene.setup();
-	  world.scene.three.background = new Color(0x080a12);
-
-	  // Renderer — lo atamos al container div
-	  world.renderer = new SimpleRenderer(components, container);
-	  world.renderer.three.setSize(W, H);
-	  world.renderer.three.setClearColor(0x080a12, 1);
-
-	  // Camera
-	  world.camera = new SimpleCamera(components);
-	  world.camera.three.position.set(10, 10, 10);
-
-	  // Luces
-	  const ambient = new AmbientLight(0xffffff, 0.8);
-	  const dir     = new DirectionalLight(0xffffff, 1.2);
-	  dir.position.set(50, 100, 50);
-	  const fill    = new DirectionalLight(0x8899bb, 0.4);
-	  fill.position.set(-30, 20, -50);
-	  world.scene.three.add(ambient, dir, fill);
-
-	  // Arrancar el loop de render
-	  components.init();
-
-	  viewers[`v_${i}`] = { components, world };
-
-	  // 3. Configurar IFC Loader
-	  const ifcLoader = components.get(IfcLoader);
-	  await ifcLoader.setup({
-	    autoSetWasm: false,
-	    wasm: {
-	      path:     WASM_PATH,
-	      absolute: false,
-	    },
-	  });
-
-	  // 4. Cargar el IFC como ArrayBuffer
 	  try {
-	    const resp = await fetch(item.ifc_path);
-	    if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
+	    // 1. Components + World
+	    const components = new Components();
+	    const worlds = components.get(Worlds);
+	    const world  = worlds.create();
 
-	    const buffer = await resp.arrayBuffer();
-	    const data   = new Uint8Array(buffer);
+	    world.scene    = new SimpleScene(components);
+	    world.renderer = new SimpleRenderer(components, container);
+	    world.camera   = new SimpleCamera(components);
 
-	    // load() devuelve un FragmentsGroup (modelo ya en la escena del world)
-	    const model = await ifcLoader.load(data);
-	    world.scene.three.add(model);
+	    world.scene.three.background = new Color(0x080a12);
+	    world.renderer.three.setSize(W, H);
 
-	    // Ajustar cámara al bounding box del modelo
-	    const bbox = new Box3().setFromObject(model);
-	    if (!bbox.isEmpty()) {
-	      const center = bbox.getCenter(new Vector3());
-	      const size   = bbox.getSize(new Vector3());
-	      const dist   = Math.max(size.x, size.y, size.z) * 1.8;
+	    // Luces
+	    world.scene.three.add(new AmbientLight(0xffffff, 0.8));
+	    const dir = new DirectionalLight(0xffffff, 1.2);
+	    dir.position.set(50, 100, 50);
+	    world.scene.three.add(dir);
+	    const fill = new DirectionalLight(0x8899bb, 0.4);
+	    fill.position.set(-30, 20, -50);
+	    world.scene.three.add(fill);
 
-	      world.camera.three.position.set(
-	        center.x + dist,
-	        center.y + dist * 0.7,
-	        center.z + dist
-	      );
+	    components.init();
+	    viewers[`v_${i}`] = { components };
 
-	      // SimpleCamera expone controls (OrbitControls interno)
-	      if (world.camera.controls) {
-	        world.camera.controls.setLookAt(
-	          center.x + dist, center.y + dist * 0.7, center.z + dist,
-	          center.x, center.y, center.z
-	        );
+	    // 2. FragmentsManager con el worker
+	    const fragments = components.get(FragmentsManager);
+	    fragments.init(WORKER_URL);
+
+	    // Cuando el modelo se carga, ajustar cámara
+	    fragments.list.onItemSet.add(({ value: model }) => {
+	      const bbox = new Box3().setFromObject(model.object || model);
+	      if (!bbox.isEmpty()) {
+	        const center = bbox.getCenter(new Vector3());
+	        const size   = bbox.getSize(new Vector3());
+	        const dist   = Math.max(size.x, size.y, size.z) * 1.8;
+	        world.camera.three.position.set(center.x + dist, center.y + dist * 0.7, center.z + dist);
+	        if (world.camera.controls) {
+	          world.camera.controls.setLookAt(
+	            center.x + dist, center.y + dist * 0.7, center.z + dist,
+	            center.x, center.y, center.z
+	          );
+	        }
 	      }
-	    }
+	      world.scene.three.add(model.object || model);
+	      document.getElementById(`vload_${i}`)?.classList.add("gone");
+	    });
 
-	    document.getElementById(`vload_${i}`)?.classList.add("gone");
+	    // 3. IfcLoader
+	    const ifcLoader = components.get(IfcLoader);
+	    await ifcLoader.setup({
+	      autoSetWasm: false,
+	      wasm: { path: WASM_PATH, absolute: false },
+	    });
+
+	    // 4. Fetch + cargar
+	    const resp = await fetch(item.ifc_path);
+	    if (!resp.ok) throw new Error(`HTTP ${resp.status} — ${item.ifc_path}`);
+
+	    const buffer = new Uint8Array(await resp.arrayBuffer());
+	    await ifcLoader.load(buffer);
 
 	  } catch(err) {
-	    console.warn(`Error cargando ${item.ifc_path}:`, err.message || err);
-	    mostrarPlaceholder(i, item.ifc_type);
-	    try { components.dispose(); } catch(e) {}
+	    console.warn(`IFC error [${item.ifc_path}]:`, err.message || err);
+	    try { viewers[`v_${i}`]?.components.dispose(); } catch(e) {}
 	    delete viewers[`v_${i}`];
+	    mostrarPlaceholder(i, item.ifc_type);
 	  }
 	}
 
@@ -66699,7 +66679,7 @@ ${colorTags}
 	  let icon = `<circle cx="12" cy="12" r="8" stroke-width="1.2"/>`;
 	  if (/rail/i.test(ifcType))   icon = `<path d="M4 6h16M4 18h16M8 6v12M16 6v12" stroke-width="1.5"/>`;
 	  if (/sign$/i.test(ifcType))  icon = `<path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5" stroke-width="1.2"/>`;
-	  if (/signal/i.test(ifcType)) icon = `<circle cx="12" cy="6" r="3"/><circle cx="12" cy="14" r="3"/><line x1="12" y1="2" x2="12" y2="22" stroke-width="1"/>`;
+	  if (/signal/i.test(ifcType)) icon = `<circle cx="12" cy="6" r="3"/><circle cx="12" cy="14" r="3"/><line x1="12" y1="2" x2="12" y2="22"/>`;
 	  if (/course/i.test(ifcType)) icon = `<rect x="2" y="8" width="20" height="4" rx="1"/><rect x="2" y="14" width="20" height="4" rx="1"/>`;
 	  if (/wall/i.test(ifcType))   icon = `<rect x="3" y="4" width="18" height="16" rx="1"/><line x1="3" y1="10" x2="21" y2="10"/><line x1="12" y1="4" x2="12" y2="20"/>`;
 	  if (/door/i.test(ifcType))   icon = `<rect x="4" y="2" width="12" height="20" rx="1"/><circle cx="14" cy="12" r="1.5"/>`;
