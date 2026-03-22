@@ -142246,4 +142246,4 @@ function mostrarPlaceholder(i, ifcType) {
   if (box) box.style.background = "#0d1120";
 }
 
-iniciar();
+document.addEventListener("DOMContentLoaded", iniciar);
