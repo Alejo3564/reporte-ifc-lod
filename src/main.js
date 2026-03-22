@@ -1,14 +1,19 @@
 import * as THREE from "three";
 import * as OBC  from "@thatopen/components";
 
-const BASE_URL   = window.location.href.replace(/\/[^/]*$/, "/");
-const WASM_PATH  = BASE_URL;
+const BASE_URL  = window.location.href.replace(/\/[^/]*$/, "/");
+const WASM_PATH = BASE_URL;
+// Worker oficial de ThatOpen — se carga como blob para evitar CORS
+const WORKER_GITHUB = "https://thatopen.github.io/engine_fragment/resources/worker.mjs";
 
 let datos = [];
-const viewers = {};
+const viewers     = {};
 const loadQueue   = [];
 let activeLoaders = 0;
 const MAX_CONCURRENT = 3;
+
+// FragmentsManager global — se inicializa UNA sola vez
+let globalFragments = null;
 
 const FILTROS = [
   { field: "codigo",   inputId: "fCod", dropId: "drop-cod", val: "" },
@@ -123,6 +128,14 @@ function processQueue() {
   }
 }
 
+// ─── CREAR WORKER URL COMO BLOB (evita CORS) ─────────────────────────────────
+async function getWorkerUrl() {
+  const resp = await fetch(WORKER_GITHUB);
+  const blob = await resp.blob();
+  const file = new File([blob], "worker.mjs", { type: "text/javascript" });
+  return URL.createObjectURL(file);
+}
+
 // ─── VIEWER ──────────────────────────────────────────────────────────────────
 async function crearViewer(i, item) {
   const container = document.getElementById(`vbox_${i}`);
@@ -132,7 +145,7 @@ async function crearViewer(i, item) {
   const H = container.clientHeight || 240;
 
   try {
-    // 1. Components
+    // 1. Components + World
     const components = new OBC.Components();
     const worlds = components.get(OBC.Worlds);
     const world  = worlds.create();
@@ -155,46 +168,47 @@ async function crearViewer(i, item) {
     components.init();
     viewers[`v_${i}`] = { components };
 
-    // 2. *** FragmentsManager DEBE inicializarse ANTES que IfcLoader ***
+    // 2. FragmentsManager — init con worker como blob URL
     const fragments = components.get(OBC.FragmentsManager);
+    if (!fragments.list) {
+      // Primera vez: cargar el worker
+      const workerUrl = await getWorkerUrl();
+      fragments.init(workerUrl);
+    }
 
-    // 3. IfcLoader — depende de FragmentsManager
+    // Cuando el modelo se carga, añadirlo a la escena
+    fragments.list.onItemSet.add(({ value: model }) => {
+      model.useCamera(world.camera.three);
+      world.scene.three.add(model.object);
+
+      // Ajustar cámara
+      const bbox = new THREE.Box3().setFromObject(model.object);
+      if (!bbox.isEmpty()) {
+        const center = bbox.getCenter(new THREE.Vector3());
+        const size   = bbox.getSize(new THREE.Vector3());
+        const dist   = Math.max(size.x, size.y, size.z) * 1.8;
+        if (world.camera.controls) {
+          world.camera.controls.setLookAt(
+            center.x + dist, center.y + dist * 0.7, center.z + dist,
+            center.x, center.y, center.z
+          );
+        }
+      }
+      document.getElementById(`vload_${i}`)?.classList.add("gone");
+    });
+
+    // 3. IfcLoader
     const ifcLoader = components.get(OBC.IfcLoader);
     await ifcLoader.setup({
       autoSetWasm: false,
-      wasm: {
-        path:     WASM_PATH,
-        absolute: true,
-      },
+      wasm: { path: WASM_PATH, absolute: true },
     });
 
-    // 4. Fetch + cargar IFC
+    // 4. Fetch + cargar
     const resp = await fetch(item.ifc_path);
     if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
     const buffer = new Uint8Array(await resp.arrayBuffer());
-    const model  = await ifcLoader.load(buffer);
-
-    // 5. Agregar a la escena
-    world.scene.three.add(model);
-
-    // 6. Ajustar cámara al bounding box
-    const bbox = new THREE.Box3().setFromObject(model);
-    if (!bbox.isEmpty()) {
-      const center = bbox.getCenter(new THREE.Vector3());
-      const size   = bbox.getSize(new THREE.Vector3());
-      const dist   = Math.max(size.x, size.y, size.z) * 1.8;
-      if (world.camera.controls) {
-        world.camera.controls.setLookAt(
-          center.x + dist, center.y + dist * 0.7, center.z + dist,
-          center.x, center.y, center.z
-        );
-      } else {
-        world.camera.three.position.set(center.x + dist, center.y + dist * 0.7, center.z + dist);
-        world.camera.three.lookAt(center);
-      }
-    }
-
-    document.getElementById(`vload_${i}`)?.classList.add("gone");
+    await ifcLoader.load(buffer);
 
   } catch(err) {
     console.warn(`IFC error [${item.ifc_path}]:`, err.message || err);
