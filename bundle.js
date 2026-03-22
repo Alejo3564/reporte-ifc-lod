@@ -142024,14 +142024,16 @@ __publicField(_MeasurementUtils, "uuid", "267ca032-672f-4cb0-afa9-d24e904f39d6")
 
 const BASE_URL  = window.location.href.replace(/\/[^/]*$/, "/");
 const WASM_PATH = BASE_URL;
-// Worker oficial de ThatOpen — se carga como blob para evitar CORS
-const WORKER_GITHUB = "https://thatopen.github.io/engine_fragment/resources/worker.mjs";
+const WORKER_URL = "https://thatopen.github.io/engine_fragment/resources/worker.mjs";
 
 let datos = [];
 const viewers     = {};
 const loadQueue   = [];
 let activeLoaders = 0;
 const MAX_CONCURRENT = 3;
+
+// Worker URL como blob — se crea UNA vez y se reutiliza en todos los viewers
+let workerBlobUrl = null;
 
 const FILTROS = [
   { field: "codigo",   inputId: "fCod", dropId: "drop-cod", val: "" },
@@ -142042,6 +142044,15 @@ const FILTROS = [
 
 // ─── INICIAR ─────────────────────────────────────────────────────────────────
 async function iniciar() {
+  // 1. Descargar worker como blob ANTES de cualquier cosa
+  console.log("Cargando worker de Fragments...");
+  const resp = await fetch(WORKER_URL);
+  const blob = await resp.blob();
+  const file = new File([blob], "worker.mjs", { type: "text/javascript" });
+  workerBlobUrl = URL.createObjectURL(file);
+  console.log("Worker listo:", workerBlobUrl);
+
+  // 2. Cargar datos
   const r = await fetch("./data/datos.json?v=" + Date.now());
   datos = await r.json();
   iniciarFiltros();
@@ -142146,24 +142157,16 @@ function processQueue() {
   }
 }
 
-// ─── CREAR WORKER URL COMO BLOB (evita CORS) ─────────────────────────────────
-async function getWorkerUrl() {
-  const resp = await fetch(WORKER_GITHUB);
-  const blob = await resp.blob();
-  const file = new File([blob], "worker.mjs", { type: "text/javascript" });
-  return URL.createObjectURL(file);
-}
-
 // ─── VIEWER ──────────────────────────────────────────────────────────────────
 async function crearViewer(i, item) {
   const container = document.getElementById(`vbox_${i}`);
-  if (!container) return;
+  if (!container || !workerBlobUrl) return;
 
   const W = container.clientWidth  || 350;
   const H = container.clientHeight || 240;
 
   try {
-    // 1. Components + World
+    // Components + World
     const components = new Components();
     const worlds = components.get(Worlds);
     const world  = worlds.create();
@@ -142186,20 +142189,15 @@ async function crearViewer(i, item) {
     components.init();
     viewers[`v_${i}`] = { components };
 
-    // 2. FragmentsManager — init con worker como blob URL
+    // FragmentsManager — init con el blob URL ya preparado
     const fragments = components.get(FragmentsManager);
-    if (!fragments.list) {
-      // Primera vez: cargar el worker
-      const workerUrl = await getWorkerUrl();
-      fragments.init(workerUrl);
-    }
+    fragments.init(workerBlobUrl);
 
-    // Cuando el modelo se carga, añadirlo a la escena
+    // Cuando el modelo se carga, añadirlo a la escena y ajustar cámara
     fragments.list.onItemSet.add(({ value: model }) => {
       model.useCamera(world.camera.three);
       world.scene.three.add(model.object);
 
-      // Ajustar cámara
       const bbox = new Box3().setFromObject(model.object);
       if (!bbox.isEmpty()) {
         const center = bbox.getCenter(new Vector3());
@@ -142215,14 +142213,14 @@ async function crearViewer(i, item) {
       document.getElementById(`vload_${i}`)?.classList.add("gone");
     });
 
-    // 3. IfcLoader
+    // IfcLoader — depende de que fragments ya esté inicializado
     const ifcLoader = components.get(IfcLoader);
     await ifcLoader.setup({
       autoSetWasm: false,
       wasm: { path: WASM_PATH, absolute: true },
     });
 
-    // 4. Fetch + cargar
+    // Fetch + cargar IFC
     const resp = await fetch(item.ifc_path);
     if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
     const buffer = new Uint8Array(await resp.arrayBuffer());
