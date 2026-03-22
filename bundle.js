@@ -142022,12 +142022,9 @@ const _MeasurementUtils = class _MeasurementUtils extends Component {
  */
 __publicField(_MeasurementUtils, "uuid", "267ca032-672f-4cb0-afa9-d24e904f39d6");
 
-// ─── CONFIG ──────────────────────────────────────────────────────────────────
-// Ruta absoluta basada en la URL actual de la página
 const BASE_URL   = window.location.href.replace(/\/[^/]*$/, "/");
 const WASM_PATH  = BASE_URL;
 
-// ─── ESTADO ──────────────────────────────────────────────────────────────────
 let datos = [];
 const viewers = {};
 const loadQueue   = [];
@@ -142156,6 +142153,7 @@ async function crearViewer(i, item) {
   const H = container.clientHeight || 240;
 
   try {
+    // 1. Components
     const components = new Components();
     const worlds = components.get(Worlds);
     const world  = worlds.create();
@@ -142178,7 +142176,10 @@ async function crearViewer(i, item) {
     components.init();
     viewers[`v_${i}`] = { components };
 
-    // IfcLoader con rutas absolutas
+    // 2. *** FragmentsManager DEBE inicializarse ANTES que IfcLoader ***
+    const fragments = components.get(FragmentsManager);
+
+    // 3. IfcLoader — depende de FragmentsManager
     const ifcLoader = components.get(IfcLoader);
     await ifcLoader.setup({
       autoSetWasm: false,
@@ -142188,15 +142189,16 @@ async function crearViewer(i, item) {
       },
     });
 
-    // Cargar IFC
+    // 4. Fetch + cargar IFC
     const resp = await fetch(item.ifc_path);
     if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
     const buffer = new Uint8Array(await resp.arrayBuffer());
     const model  = await ifcLoader.load(buffer);
 
+    // 5. Agregar a la escena
     world.scene.three.add(model);
 
-    // Ajustar cámara
+    // 6. Ajustar cámara al bounding box
     const bbox = new Box3().setFromObject(model);
     if (!bbox.isEmpty()) {
       const center = bbox.getCenter(new Vector3());
@@ -142207,6 +142209,9 @@ async function crearViewer(i, item) {
           center.x + dist, center.y + dist * 0.7, center.z + dist,
           center.x, center.y, center.z
         );
+      } else {
+        world.camera.three.position.set(center.x + dist, center.y + dist * 0.7, center.z + dist);
+        world.camera.three.lookAt(center);
       }
     }
 
