@@ -1,17 +1,15 @@
 import * as THREE from "three";
 import * as OBC  from "@thatopen/components";
 
-const BASE_URL  = window.location.href.replace(/\/[^/]*$/, "/");
-const WASM_PATH = BASE_URL;
+// WASM desde unpkg — versión exacta compatible con @thatopen/fragments@3.3.6
+const WASM_PATH  = "https://unpkg.com/web-ifc@0.0.68/";
 const WORKER_URL = "https://thatopen.github.io/engine_fragment/resources/worker.mjs";
 
-let datos = [];
-const viewers     = {};
-const loadQueue   = [];
+let datos        = [];
+const viewers    = {};
+const loadQueue  = [];
 let activeLoaders = 0;
 const MAX_CONCURRENT = 3;
-
-// Worker URL como blob — se crea UNA vez y se reutiliza en todos los viewers
 let workerBlobUrl = null;
 
 const FILTROS = [
@@ -21,24 +19,18 @@ const FILTROS = [
   { field: "lod",      inputId: "fLod", dropId: "drop-lod", val: "" },
 ];
 
-// ─── INICIAR ─────────────────────────────────────────────────────────────────
 async function iniciar() {
-  // 1. Descargar worker como blob ANTES de cualquier cosa
-  console.log("Cargando worker de Fragments...");
+  // Descargar worker como blob UNA SOLA VEZ
   const resp = await fetch(WORKER_URL);
   const blob = await resp.blob();
-  const file = new File([blob], "worker.mjs", { type: "text/javascript" });
-  workerBlobUrl = URL.createObjectURL(file);
-  console.log("Worker listo:", workerBlobUrl);
+  workerBlobUrl = URL.createObjectURL(new File([blob], "worker.mjs", { type: "text/javascript" }));
 
-  // 2. Cargar datos
   const r = await fetch("./data/datos.json?v=" + Date.now());
   datos = await r.json();
   iniciarFiltros();
   renderTabla(datos);
 }
 
-// ─── FILTROS ─────────────────────────────────────────────────────────────────
 function iniciarFiltros() {
   FILTROS.forEach(f => {
     const input = document.getElementById(f.inputId);
@@ -85,7 +77,6 @@ function limpiar() {
   renderTabla(datos);
 }
 
-// ─── RENDER TABLA ─────────────────────────────────────────────────────────────
 function renderTabla(d) {
   const tb = document.getElementById("tbody");
   document.getElementById("empty").style.display = d.length === 0 ? "block" : "none";
@@ -124,7 +115,6 @@ function renderTabla(d) {
   processQueue();
 }
 
-// ─── COLA ────────────────────────────────────────────────────────────────────
 function processQueue() {
   while (activeLoaders < MAX_CONCURRENT && loadQueue.length > 0) {
     const task = loadQueue.shift();
@@ -136,7 +126,6 @@ function processQueue() {
   }
 }
 
-// ─── VIEWER ──────────────────────────────────────────────────────────────────
 async function crearViewer(i, item) {
   const container = document.getElementById(`vbox_${i}`);
   if (!container || !workerBlobUrl) return;
@@ -145,7 +134,6 @@ async function crearViewer(i, item) {
   const H = container.clientHeight || 240;
 
   try {
-    // Components + World
     const components = new OBC.Components();
     const worlds = components.get(OBC.Worlds);
     const world  = worlds.create();
@@ -153,7 +141,6 @@ async function crearViewer(i, item) {
     world.scene    = new OBC.SimpleScene(components);
     world.renderer = new OBC.SimpleRenderer(components, container);
     world.camera   = new OBC.SimpleCamera(components);
-
     world.scene.three.background = new THREE.Color(0x080a12);
     world.renderer.three.setSize(W, H);
 
@@ -168,15 +155,13 @@ async function crearViewer(i, item) {
     components.init();
     viewers[`v_${i}`] = { components };
 
-    // FragmentsManager — init con el blob URL ya preparado
+    // FragmentsManager con worker ya preparado
     const fragments = components.get(OBC.FragmentsManager);
     fragments.init(workerBlobUrl);
 
-    // Cuando el modelo se carga, añadirlo a la escena y ajustar cámara
     fragments.list.onItemSet.add(({ value: model }) => {
       model.useCamera(world.camera.three);
       world.scene.three.add(model.object);
-
       const bbox = new THREE.Box3().setFromObject(model.object);
       if (!bbox.isEmpty()) {
         const center = bbox.getCenter(new THREE.Vector3());
@@ -192,14 +177,13 @@ async function crearViewer(i, item) {
       document.getElementById(`vload_${i}`)?.classList.add("gone");
     });
 
-    // IfcLoader — depende de que fragments ya esté inicializado
+    // IfcLoader con WASM desde unpkg (versión exacta compatible)
     const ifcLoader = components.get(OBC.IfcLoader);
     await ifcLoader.setup({
       autoSetWasm: false,
       wasm: { path: WASM_PATH, absolute: true },
     });
 
-    // Fetch + cargar IFC
     const resp = await fetch(item.ifc_path);
     if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
     const buffer = new Uint8Array(await resp.arrayBuffer());
@@ -213,7 +197,6 @@ async function crearViewer(i, item) {
   }
 }
 
-// ─── PLACEHOLDER ─────────────────────────────────────────────────────────────
 function mostrarPlaceholder(i, ifcType) {
   const vload = document.getElementById(`vload_${i}`);
   const box   = document.getElementById(`vbox_${i}`);
