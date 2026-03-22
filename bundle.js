@@ -68238,14 +68238,14 @@ const _MeasurementUtils = class _MeasurementUtils extends Component {
  */
 __publicField(_MeasurementUtils, "uuid", "267ca032-672f-4cb0-afa9-d24e904f39d6");
 
-// ─── WASM y Worker path (copiados a raíz por deploy.yml) ─────────────────────
-const WORKER_URL = "./worker.mjs";
-const WASM_PATH  = "./";
+// ─── CONFIG ──────────────────────────────────────────────────────────────────
+// Ruta absoluta basada en la URL actual de la página
+const BASE_URL   = window.location.href.replace(/\/[^/]*$/, "/");
+const WASM_PATH  = BASE_URL;
 
 // ─── ESTADO ──────────────────────────────────────────────────────────────────
 let datos = [];
 const viewers = {};
-
 const loadQueue   = [];
 let activeLoaders = 0;
 const MAX_CONCURRENT = 3;
@@ -68318,10 +68318,7 @@ function renderTabla(d) {
   document.getElementById("empty").style.display = d.length === 0 ? "block" : "none";
   document.getElementById("cnt").textContent = `${d.length} elemento${d.length !== 1 ? "s" : ""}`;
 
-  // Limpiar viewers anteriores
-  Object.values(viewers).forEach(v => {
-    try { v.components.dispose(); } catch(e) {}
-  });
+  Object.values(viewers).forEach(v => { try { v.components.dispose(); } catch(e) {} });
   Object.keys(viewers).forEach(k => delete viewers[k]);
   loadQueue.length = 0;
   activeLoaders = 0;
@@ -68375,7 +68372,6 @@ async function crearViewer(i, item) {
   const H = container.clientHeight || 240;
 
   try {
-    // 1. Components + World
     const components = new Components();
     const worlds = components.get(Worlds);
     const world  = worlds.create();
@@ -68387,7 +68383,6 @@ async function crearViewer(i, item) {
     world.scene.three.background = new Color(0x080a12);
     world.renderer.three.setSize(W, H);
 
-    // Luces
     world.scene.three.add(new AmbientLight(0xffffff, 0.8));
     const dir = new DirectionalLight(0xffffff, 1.2);
     dir.position.set(50, 100, 50);
@@ -68399,42 +68394,39 @@ async function crearViewer(i, item) {
     components.init();
     viewers[`v_${i}`] = { components };
 
-    // 2. FragmentsManager con el worker
-    const fragments = components.get(FragmentsManager);
-    fragments.init(WORKER_URL);
-
-    // Cuando el modelo se carga, ajustar cámara
-    fragments.list.onItemSet.add(({ value: model }) => {
-      const bbox = new Box3().setFromObject(model.object || model);
-      if (!bbox.isEmpty()) {
-        const center = bbox.getCenter(new Vector3());
-        const size   = bbox.getSize(new Vector3());
-        const dist   = Math.max(size.x, size.y, size.z) * 1.8;
-        world.camera.three.position.set(center.x + dist, center.y + dist * 0.7, center.z + dist);
-        if (world.camera.controls) {
-          world.camera.controls.setLookAt(
-            center.x + dist, center.y + dist * 0.7, center.z + dist,
-            center.x, center.y, center.z
-          );
-        }
-      }
-      world.scene.three.add(model.object || model);
-      document.getElementById(`vload_${i}`)?.classList.add("gone");
-    });
-
-    // 3. IfcLoader
+    // IfcLoader con rutas absolutas
     const ifcLoader = components.get(IfcLoader);
     await ifcLoader.setup({
       autoSetWasm: false,
-      wasm: { path: WASM_PATH, absolute: false },
+      wasm: {
+        path:     WASM_PATH,
+        absolute: true,
+      },
     });
 
-    // 4. Fetch + cargar
+    // Cargar IFC
     const resp = await fetch(item.ifc_path);
-    if (!resp.ok) throw new Error(`HTTP ${resp.status} — ${item.ifc_path}`);
-
+    if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
     const buffer = new Uint8Array(await resp.arrayBuffer());
-    await ifcLoader.load(buffer);
+    const model  = await ifcLoader.load(buffer);
+
+    world.scene.three.add(model);
+
+    // Ajustar cámara
+    const bbox = new Box3().setFromObject(model);
+    if (!bbox.isEmpty()) {
+      const center = bbox.getCenter(new Vector3());
+      const size   = bbox.getSize(new Vector3());
+      const dist   = Math.max(size.x, size.y, size.z) * 1.8;
+      if (world.camera.controls) {
+        world.camera.controls.setLookAt(
+          center.x + dist, center.y + dist * 0.7, center.z + dist,
+          center.x, center.y, center.z
+        );
+      }
+    }
+
+    document.getElementById(`vload_${i}`)?.classList.add("gone");
 
   } catch(err) {
     console.warn(`IFC error [${item.ifc_path}]:`, err.message || err);
