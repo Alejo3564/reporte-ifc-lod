@@ -142204,13 +142204,11 @@ function fitCamera(bbox, world) {
   const size   = bbox.getSize(new Vector3());
   const maxDim = Math.max(size.x, size.y, size.z);
   if (maxDim === 0) return false;
-  // Factor de zoom: más cerca para objetos pequeños, más lejos para grandes
   const dist = maxDim * 1.5;
   if (world.camera.controls) {
     world.camera.controls.setLookAt(
       center.x + dist, center.y + dist * 0.6, center.z + dist,
-      center.x, center.y, center.z,
-      true
+      center.x, center.y, center.z, true
     );
   } else {
     world.camera.three.position.set(center.x + dist, center.y + dist * 0.6, center.z + dist);
@@ -142219,55 +142217,36 @@ function fitCamera(bbox, world) {
   return true;
 }
 
-// Usar OBC.BoundingBoxer — el método oficial que maneja coordenadas reales y unidades
-function fitConBoundingBoxer(components, model, world, i) {
-  let fitted = false;
+// API correcta de BoundingBoxer v3.3: list.clear() + addFromModels() + get()
+function fitConBoundingBoxer(components, world, i) {
   try {
     const boxer = components.get(BoundingBoxer);
-    boxer.reset();
-    boxer.add(model);
-    const sphere = boxer.getSphere();
-    if (sphere && sphere.radius > 0) {
-      const dist = sphere.radius * 2;
-      const c = sphere.center;
-      if (world.camera.controls) {
-        world.camera.controls.setLookAt(
-          c.x + dist, c.y + dist * 0.6, c.z + dist,
-          c.x, c.y, c.z,
-          true
-        );
-      }
-      fitted = true;
-    } else {
-      // Fallback: bbox del mesh
-      const mesh = boxer.getMesh();
-      mesh.geometry.computeBoundingBox();
-      const bb = mesh.geometry.boundingBox;
-      if (bb && !bb.isEmpty()) {
-        fitted = fitCamera(bb, world);
-      }
+    boxer.list.clear();
+    boxer.addFromModels();         // agrega todos los modelos cargados en este components
+    const box = boxer.get();       // THREE.Box3
+    boxer.list.clear();            // limpiar después
+    if (box && !box.isEmpty()) {
+      fitCamera(box, world);
+      document.getElementById(`vload_${i}`)?.classList.add("gone");
+      return;
     }
-    boxer.reset();
   } catch(e) {
-    console.warn("BoundingBoxer error:", e.message);
+    console.warn(`BoundingBoxer error [${i}]:`, e.message);
   }
 
-  if (!fitted) {
-    // Último recurso: traverse manual
-    model.object.updateWorldMatrix(true, true);
-    const bbox = new Box3();
-    model.object.traverse(child => {
-      if (!child.isMesh || !child.geometry) return;
-      try {
-        const pos = child.geometry.attributes.position;
-        if (!pos || pos.count === 0) return;
-        const cb = new Box3().setFromObject(child);
-        if (!cb.isEmpty()) bbox.union(cb);
-      } catch(e) {}
-    });
-    fitCamera(bbox, world);
-  }
-
+  // Fallback: traverse manual del objeto de la escena
+  const bbox = new Box3();
+  world.scene.three.traverse(child => {
+    if (!child.isMesh || !child.geometry) return;
+    try {
+      const pos = child.geometry.attributes.position;
+      if (!pos || pos.count === 0) return;
+      child.updateWorldMatrix(true, false);
+      const cb = new Box3().setFromObject(child);
+      if (!cb.isEmpty()) bbox.union(cb);
+    } catch(e) {}
+  });
+  fitCamera(bbox, world);
   document.getElementById(`vload_${i}`)?.classList.add("gone");
 }
 
@@ -142306,10 +142285,8 @@ async function crearViewer(i, item) {
       model.useCamera(world.camera.three);
       world.scene.three.add(model.object);
       fragments.core.update(true);
-      // Esperar que los tiles se rendericen antes de medir
-      setTimeout(() => {
-        fitConBoundingBoxer(components, model, world, i);
-      }, 300);
+      // Esperar 400ms para que los tiles se procesen antes de medir
+      setTimeout(() => fitConBoundingBoxer(components, world, i), 400);
     });
 
     const ifcLoader = components.get(IfcLoader);
@@ -142327,9 +142304,7 @@ async function crearViewer(i, item) {
       model.useCamera(world.camera.three);
       world.scene.three.add(model.object);
       fragments.core.update(true);
-      setTimeout(() => {
-        fitConBoundingBoxer(components, model, world, i);
-      }, 300);
+      setTimeout(() => fitConBoundingBoxer(components, world, i), 400);
     }
 
   } catch(err) {
