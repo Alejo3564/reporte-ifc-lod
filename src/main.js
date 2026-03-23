@@ -138,24 +138,21 @@ function fitCamera(bbox, world) {
   return true;
 }
 
-// API correcta de BoundingBoxer v3.3: list.clear() + addFromModels() + get()
 function fitConBoundingBoxer(components, world, i) {
   try {
     const boxer = components.get(OBC.BoundingBoxer);
     boxer.list.clear();
-    boxer.addFromModels();         // agrega todos los modelos cargados en este components
-    const box = boxer.get();       // THREE.Box3
-    boxer.list.clear();            // limpiar después
+    boxer.addFromModels();
+    const box = boxer.get();
+    boxer.list.clear();
     if (box && !box.isEmpty()) {
       fitCamera(box, world);
       document.getElementById(`vload_${i}`)?.classList.add("gone");
       return;
     }
-  } catch(e) {
-    console.warn(`BoundingBoxer error [${i}]:`, e.message);
-  }
+  } catch(e) {}
 
-  // Fallback: traverse manual del objeto de la escena
+  // Fallback: traverse manual
   const bbox = new THREE.Box3();
   world.scene.three.traverse(child => {
     if (!child.isMesh || !child.geometry) return;
@@ -185,14 +182,14 @@ async function crearViewer(i, item) {
     world.scene    = new OBC.SimpleScene(components);
     world.renderer = new OBC.SimpleRenderer(components, container);
     world.camera   = new OBC.SimpleCamera(components);
-    world.scene.three.background = new THREE.Color(0x080a12);
+    world.scene.three.background = new THREE.Color(0x08212C);
     world.renderer.three.setSize(W, H);
 
     world.scene.three.add(new THREE.AmbientLight(0xffffff, 0.8));
     const dir = new THREE.DirectionalLight(0xffffff, 1.2);
     dir.position.set(50, 100, 50);
     world.scene.three.add(dir);
-    const fill = new THREE.DirectionalLight(0x8899bb, 0.4);
+    const fill = new THREE.DirectionalLight(0xabd4d8, 0.4);
     fill.position.set(-30, 20, -50);
     world.scene.three.add(fill);
 
@@ -206,7 +203,6 @@ async function crearViewer(i, item) {
       model.useCamera(world.camera.three);
       world.scene.three.add(model.object);
       fragments.core.update(true);
-      // Esperar 400ms para que los tiles se procesen antes de medir
       setTimeout(() => fitConBoundingBoxer(components, world, i), 400);
     });
 
@@ -216,10 +212,33 @@ async function crearViewer(i, item) {
       wasm: { path: WASM_PATH, absolute: true },
     });
 
+    // Agregar clases IFC4x3 de infraestructura ferroviaria que no están por defecto
+    ifcLoader.onIfcImporterInitialized.add((importer) => {
+      const extraClasses = [
+        // Infraestructura ferroviaria IFC4x3
+        "IFCRAILWAYPART", "IFCRAILWAY", "IFCFACILITY", "IFCFACILITYPART",
+        "IFCCOURSE", "IFCPAVEMENT",
+        // Elementos geográficos
+        "IFCGEOGRAPHICELEMENT",
+        // Señalización
+        "IFCSIGN", "IFCSIGNAL",
+        // Alineamiento (solo geometría de eje, no sólido)
+        "IFCALIGNMENT",
+      ];
+      extraClasses.forEach(cls => {
+        try {
+          if (!importer.classes.has(cls)) importer.classes.add(cls);
+        } catch(e) {}
+      });
+    });
+
     const resp = await fetch(item.ifc_path);
     if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
     const buffer = new Uint8Array(await resp.arrayBuffer());
-    const model  = await ifcLoader.load(buffer, false, item.codigo);
+
+    // coordinate: false para ignorar transformaciones de coordenadas reales
+    // (evita el problema de MAGNA-SIRGAS con coordenadas en millones de metros)
+    const model = await ifcLoader.load(buffer, false, item.codigo);
 
     if (model?.object && !world.scene.three.getObjectById(model.object.id)) {
       model.useCamera(world.camera.three);
@@ -248,14 +267,15 @@ function mostrarPlaceholder(i, ifcType) {
   if (/wall/i.test(ifcType))   icon = `<rect x="3" y="4" width="18" height="16" rx="1"/><line x1="3" y1="10" x2="21" y2="10"/><line x1="12" y1="4" x2="12" y2="20"/>`;
   if (/door/i.test(ifcType))   icon = `<rect x="4" y="2" width="12" height="20" rx="1"/><circle cx="14" cy="12" r="1.5"/>`;
   if (/geo/i.test(ifcType))    icon = `<path d="M3 17l4-8 4 5 3-3 4 6H3z"/><circle cx="17" cy="7" r="2"/>`;
+  if (/alignment/i.test(ifcType)) icon = `<path d="M3 12 Q8 4 12 12 Q16 20 21 12" stroke-width="2" fill="none"/>`;
   vload.innerHTML = `
-    <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="#3b82f6"
+    <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="#ABC022"
          stroke-linecap="round" stroke-linejoin="round"
-         style="opacity:.5;margin-bottom:8px">${icon}</svg>
-    <span style="color:#475569;font-size:9px;font-family:'IBM Plex Mono',monospace;
+         style="opacity:.6;margin-bottom:8px">${icon}</svg>
+    <span style="color:#61747C;font-size:9px;font-family:'JetBrains Mono',monospace;
                  text-align:center;letter-spacing:.5px;line-height:1.6">
       MODELO NO<br>DISPONIBLE</span>`;
-  if (box) box.style.background = "#0d1120";
+  if (box) box.style.background = "#0d1820";
 }
 
 document.addEventListener("DOMContentLoaded", iniciar);
