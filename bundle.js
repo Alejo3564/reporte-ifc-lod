@@ -142204,34 +142204,75 @@ function processQueue() {
   }
 }
 
-// Calcula el bounding box real del modelo fragments recorriendo sus meshes internos
-function getModelBBox(model) {
+// BBox seguro — ignora meshes con geometría incompleta
+function getModelBBox(modelObject) {
   const bbox = new Box3();
-
-  // Intentar desde _meshesManager o _itemsManager del modelo fragments
-  try {
-    if (model._meshesManager) {
-      model._meshesManager._list?.forEach(mesh => {
-        if (mesh.geometry) bbox.expandByObject(mesh);
-      });
-    }
-  } catch(e) {}
-
-  // Si no funcionó, recorrer el object directamente
-  if (bbox.isEmpty() && model.object) {
-    model.object.traverse(child => {
-      if (child.isMesh && child.geometry) {
-        child.geometry.computeBoundingBox();
-        const childBox = child.geometry.boundingBox?.clone();
-        if (childBox) {
-          childBox.applyMatrix4(child.matrixWorld);
-          bbox.union(childBox);
-        }
-      }
-    });
-  }
-
+  modelObject.traverse(child => {
+    if (!child.isMesh || !child.geometry) return;
+    try {
+      // Solo procesar si tiene posición válida
+      const pos = child.geometry.attributes.position;
+      if (!pos || pos.count === 0) return;
+      child.geometry.computeBoundingBox();
+      if (!child.geometry.boundingBox) return;
+      const cb = child.geometry.boundingBox.clone();
+      cb.applyMatrix4(child.matrixWorld);
+      bbox.union(cb);
+    } catch(e) { /* ignorar meshes con geometría incompleta */ }
+  });
   return bbox;
+}
+
+function fitCamera(bbox, world) {
+  if (!bbox || bbox.isEmpty()) return;
+  const center = bbox.getCenter(new Vector3());
+  const size   = bbox.getSize(new Vector3());
+  const dist   = Math.max(size.x, size.y, size.z) * 1.5;
+  if (world.camera.controls) {
+    world.camera.controls.setLookAt(
+      center.x + dist, center.y + dist * 0.6, center.z + dist,
+      center.x, center.y, center.z,
+      true
+    );
+  } else {
+    world.camera.three.position.set(center.x + dist, center.y + dist * 0.6, center.z + dist);
+    world.camera.three.lookAt(center);
+  }
+}
+
+function ocultarSpinner(i) {
+  document.getElementById(`vload_${i}`)?.classList.add("gone");
+}
+
+function fitConReintentos(model, world, i, maxFrames = 40) {
+  let n = 0;
+  const tryFit = () => {
+    n++;
+    const bbox = getModelBBox(model.object);
+    if (!bbox.isEmpty()) {
+      fitCamera(bbox, world);
+      ocultarSpinner(i);
+      return;
+    }
+    if (n < maxFrames) {
+      requestAnimationFrame(tryFit);
+    } else {
+      // Último recurso: OBC.BoundingBoxer
+      try {
+        const boxer = model._components?.get(BoundingBoxer);
+        if (boxer) {
+          boxer.reset();
+          boxer.add(model);
+          const mesh = boxer.getMesh();
+          if (mesh?.geometry?.boundingBox) {
+            fitCamera(mesh.geometry.boundingBox, world);
+          }
+        }
+      } catch(e) {}
+      ocultarSpinner(i);
+    }
+  };
+  requestAnimationFrame(tryFit);
 }
 
 async function crearViewer(i, item) {
@@ -142270,33 +142311,7 @@ async function crearViewer(i, item) {
       model.useCamera(world.camera.three);
       world.scene.three.add(model.object);
       fragments.core.update(true);
-
-      // Esperar varios frames para que los tiles se procesen
-      let attempts = 0;
-      const tryFit = () => {
-        attempts++;
-        const bbox = getModelBBox(model);
-        if (!bbox.isEmpty()) {
-          fitCamera(bbox, world);
-          document.getElementById(`vload_${i}`)?.classList.add("gone");
-        } else if (attempts < 30) {
-          // Reintentar hasta 30 frames (~500ms)
-          requestAnimationFrame(tryFit);
-        } else {
-          // Usar BoundingBoxer de OBC si está disponible
-          try {
-            const boxer = components.get(BoundingBoxer);
-            boxer.reset();
-            boxer.add(model);
-            const obcBox = boxer.getMesh().geometry.boundingBox?.clone();
-            if (obcBox && !obcBox.isEmpty()) {
-              fitCamera(obcBox, world);
-            }
-          } catch(e) {}
-          document.getElementById(`vload_${i}`)?.classList.add("gone");
-        }
-      };
-      requestAnimationFrame(tryFit);
+      fitConReintentos(model, world, i);
     });
 
     const ifcLoader = components.get(IfcLoader);
@@ -142311,15 +142326,11 @@ async function crearViewer(i, item) {
     const model  = await ifcLoader.load(buffer, false, item.codigo);
 
     // Fallback si onItemSet no disparó
-    if (model && model.object && !world.scene.three.getObjectById(model.object.id)) {
+    if (model?.object && !world.scene.three.getObjectById(model.object.id)) {
       model.useCamera(world.camera.three);
       world.scene.three.add(model.object);
       fragments.core.update(true);
-      requestAnimationFrame(() => {
-        const bbox = getModelBBox(model);
-        if (!bbox.isEmpty()) fitCamera(bbox, world);
-        document.getElementById(`vload_${i}`)?.classList.add("gone");
-      });
+      fitConReintentos(model, world, i);
     }
 
   } catch(err) {
@@ -142327,23 +142338,6 @@ async function crearViewer(i, item) {
     try { viewers[`v_${i}`]?.components.dispose(); } catch(e) {}
     delete viewers[`v_${i}`];
     mostrarPlaceholder(i, item.ifc_type);
-  }
-}
-
-function fitCamera(bbox, world) {
-  if (!bbox || bbox.isEmpty()) return;
-  const center = bbox.getCenter(new Vector3());
-  const size   = bbox.getSize(new Vector3());
-  const dist   = Math.max(size.x, size.y, size.z) * 1.5;
-  if (world.camera.controls) {
-    world.camera.controls.setLookAt(
-      center.x + dist, center.y + dist * 0.6, center.z + dist,
-      center.x, center.y, center.z,
-      true  // animate
-    );
-  } else {
-    world.camera.three.position.set(center.x + dist, center.y + dist * 0.6, center.z + dist);
-    world.camera.three.lookAt(center);
   }
 }
 
