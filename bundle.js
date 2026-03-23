@@ -142145,11 +142145,9 @@ function selectVal(f, val) {
   document.getElementById(f.dropId).classList.remove("open");
   aplicarFiltros();
 }
-
 function aplicarFiltros() {
   renderTabla(datos.filter(x => FILTROS.every(f => !f.val || x[f.field] === f.val)));
 }
-
 function limpiar() {
   FILTROS.forEach(f => { f.val = ""; document.getElementById(f.inputId).value = ""; });
   renderTabla(datos);
@@ -142159,13 +142157,11 @@ function renderTabla(d) {
   const tb = document.getElementById("tbody");
   document.getElementById("empty").style.display = d.length === 0 ? "block" : "none";
   document.getElementById("cnt").textContent = `${d.length} elemento${d.length !== 1 ? "s" : ""}`;
-
   Object.values(viewers).forEach(v => { try { v.components.dispose(); } catch(e) {} });
   Object.keys(viewers).forEach(k => delete viewers[k]);
   loadQueue.length = 0;
   activeLoaders = 0;
   tb.innerHTML = "";
-
   d.forEach((item, i) => {
     const linkHtml = item.link
       ? `<a class="bsdd-link" href="${item.link}" target="_blank" rel="noopener">
@@ -142174,7 +142170,6 @@ function renderTabla(d) {
              <polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/>
            </svg>bSDD IFC</a>`
       : `<span style="color:var(--muted);font-size:12px">—</span>`;
-
     const tr = document.createElement("tr");
     tr.innerHTML =
       `<td class="cod">${item.codigo}</td>` +
@@ -142189,7 +142184,6 @@ function renderTabla(d) {
     tb.appendChild(tr);
     loadQueue.push({ i, item });
   });
-
   processQueue();
 }
 
@@ -142204,30 +142198,31 @@ function processQueue() {
   }
 }
 
-// BBox seguro — ignora meshes con geometría incompleta
-function getModelBBox(modelObject) {
+// Calcula bbox forzando actualización de matrices — robusto para fragments
+function calcBBox(object) {
   const bbox = new Box3();
-  modelObject.traverse(child => {
+  // Forzar actualización de todas las matrices del árbol
+  object.updateWorldMatrix(true, true);
+  object.traverse(child => {
     if (!child.isMesh || !child.geometry) return;
     try {
-      // Solo procesar si tiene posición válida
       const pos = child.geometry.attributes.position;
       if (!pos || pos.count === 0) return;
-      child.geometry.computeBoundingBox();
-      if (!child.geometry.boundingBox) return;
-      const cb = child.geometry.boundingBox.clone();
-      cb.applyMatrix4(child.matrixWorld);
-      bbox.union(cb);
-    } catch(e) { /* ignorar meshes con geometría incompleta */ }
+      // Usar expandByObject que es más robusto que computeBoundingBox manual
+      const childBBox = new Box3().setFromObject(child);
+      if (!childBBox.isEmpty()) bbox.union(childBBox);
+    } catch(e) {}
   });
   return bbox;
 }
 
 function fitCamera(bbox, world) {
-  if (!bbox || bbox.isEmpty()) return;
+  if (!bbox || bbox.isEmpty()) return false;
   const center = bbox.getCenter(new Vector3());
   const size   = bbox.getSize(new Vector3());
-  const dist   = Math.max(size.x, size.y, size.z) * 1.5;
+  const maxDim = Math.max(size.x, size.y, size.z);
+  if (maxDim === 0) return false;
+  const dist = maxDim * 1.5;
   if (world.camera.controls) {
     world.camera.controls.setLookAt(
       center.x + dist, center.y + dist * 0.6, center.z + dist,
@@ -142238,47 +142233,27 @@ function fitCamera(bbox, world) {
     world.camera.three.position.set(center.x + dist, center.y + dist * 0.6, center.z + dist);
     world.camera.three.lookAt(center);
   }
+  return true;
 }
 
-function ocultarSpinner(i) {
-  document.getElementById(`vload_${i}`)?.classList.add("gone");
-}
-
-function fitConReintentos(model, world, i, maxFrames = 40) {
-  let n = 0;
-  const tryFit = () => {
-    n++;
-    const bbox = getModelBBox(model.object);
-    if (!bbox.isEmpty()) {
-      fitCamera(bbox, world);
-      ocultarSpinner(i);
-      return;
-    }
-    if (n < maxFrames) {
-      requestAnimationFrame(tryFit);
-    } else {
-      // Último recurso: OBC.BoundingBoxer
-      try {
-        const boxer = model._components?.get(BoundingBoxer);
-        if (boxer) {
-          boxer.reset();
-          boxer.add(model);
-          const mesh = boxer.getMesh();
-          if (mesh?.geometry?.boundingBox) {
-            fitCamera(mesh.geometry.boundingBox, world);
-          }
-        }
-      } catch(e) {}
-      ocultarSpinner(i);
-    }
-  };
-  requestAnimationFrame(tryFit);
+function ajustarCamara(modelObj, world, i, intento = 0) {
+  const MAX = 60; // ~1 segundo de reintentos
+  const bbox = calcBBox(modelObj);
+  if (!bbox.isEmpty() && fitCamera(bbox, world)) {
+    document.getElementById(`vload_${i}`)?.classList.add("gone");
+    return;
+  }
+  if (intento < MAX) {
+    requestAnimationFrame(() => ajustarCamara(modelObj, world, i, intento + 1));
+  } else {
+    // Timeout — mostrar igual aunque no haya podido centrar
+    document.getElementById(`vload_${i}`)?.classList.add("gone");
+  }
 }
 
 async function crearViewer(i, item) {
   const container = document.getElementById(`vbox_${i}`);
   if (!container || !workerBlobUrl) return;
-
   const W = container.clientWidth  || 350;
   const H = container.clientHeight || 240;
 
@@ -142311,7 +142286,8 @@ async function crearViewer(i, item) {
       model.useCamera(world.camera.three);
       world.scene.three.add(model.object);
       fragments.core.update(true);
-      fitConReintentos(model, world, i);
+      // Iniciar ajuste con reintentos
+      ajustarCamara(model.object, world, i);
     });
 
     const ifcLoader = components.get(IfcLoader);
@@ -142330,7 +142306,7 @@ async function crearViewer(i, item) {
       model.useCamera(world.camera.three);
       world.scene.three.add(model.object);
       fragments.core.update(true);
-      fitConReintentos(model, world, i);
+      ajustarCamara(model.object, world, i);
     }
 
   } catch(err) {
