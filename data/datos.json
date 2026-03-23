@@ -107,7 +107,7 @@
     "ifc_path": "models/IfcAlignment.ifc",
     "link": "https://identifier.buildingsmart.org/uri/buildingsmart/ifc/4.3/class/IfcAlignment"
   },
-    {
+  {
     "codigo": "A.04.04.03",
     "elemento": "Select fill material",
     "ifc_type": "IfcEarthworksFill.SUBGRADE",
@@ -115,5 +115,14 @@
     "lod": "200",
     "ifc_path": "models/IfcEarthworksFill.SUBGRADE.ifc",
     "link": "https://identifier.buildingsmart.org/uri/buildingsmart/ifc/4.3/class/IfcEarthworksFillSUBGRADE"
+  },
+    {
+    "codigo": "A.04.04.01",
+    "elemento": "Mechanical excavations",
+    "ifc_type": "IfcEarthworksCut.CUT",
+    "descripcion": "Excavaciones",
+    "lod": "200",
+    "ifc_path": "models/IfcEarthworksCut.CUT.ifc",
+    "link": "https://identifier.buildingsmart.org/uri/buildingsmart/ifc/4.3/class/IfcEarthworksCutCUT"
   }
 ]
