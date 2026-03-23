@@ -142204,6 +142204,36 @@ function processQueue() {
   }
 }
 
+// Calcula el bounding box real del modelo fragments recorriendo sus meshes internos
+function getModelBBox(model) {
+  const bbox = new Box3();
+
+  // Intentar desde _meshesManager o _itemsManager del modelo fragments
+  try {
+    if (model._meshesManager) {
+      model._meshesManager._list?.forEach(mesh => {
+        if (mesh.geometry) bbox.expandByObject(mesh);
+      });
+    }
+  } catch(e) {}
+
+  // Si no funcionó, recorrer el object directamente
+  if (bbox.isEmpty() && model.object) {
+    model.object.traverse(child => {
+      if (child.isMesh && child.geometry) {
+        child.geometry.computeBoundingBox();
+        const childBox = child.geometry.boundingBox?.clone();
+        if (childBox) {
+          childBox.applyMatrix4(child.matrixWorld);
+          bbox.union(childBox);
+        }
+      }
+    });
+  }
+
+  return bbox;
+}
+
 async function crearViewer(i, item) {
   const container = document.getElementById(`vbox_${i}`);
   if (!container || !workerBlobUrl) return;
@@ -142236,19 +142266,37 @@ async function crearViewer(i, item) {
     const fragments = components.get(FragmentsManager);
     fragments.init(workerBlobUrl);
 
-    // Escuchar cuando el modelo esté listo en la escena
     fragments.list.onItemSet.add(({ value: model }) => {
       model.useCamera(world.camera.three);
       world.scene.three.add(model.object);
-
-      // Actualizar el sistema de fragments para forzar visibilidad y tiles
       fragments.core.update(true);
 
-      // Esperar un frame para que el bounding box esté calculado
-      requestAnimationFrame(() => {
-        fitCamera(model.object, world);
-        document.getElementById(`vload_${i}`)?.classList.add("gone");
-      });
+      // Esperar varios frames para que los tiles se procesen
+      let attempts = 0;
+      const tryFit = () => {
+        attempts++;
+        const bbox = getModelBBox(model);
+        if (!bbox.isEmpty()) {
+          fitCamera(bbox, world);
+          document.getElementById(`vload_${i}`)?.classList.add("gone");
+        } else if (attempts < 30) {
+          // Reintentar hasta 30 frames (~500ms)
+          requestAnimationFrame(tryFit);
+        } else {
+          // Usar BoundingBoxer de OBC si está disponible
+          try {
+            const boxer = components.get(BoundingBoxer);
+            boxer.reset();
+            boxer.add(model);
+            const obcBox = boxer.getMesh().geometry.boundingBox?.clone();
+            if (obcBox && !obcBox.isEmpty()) {
+              fitCamera(obcBox, world);
+            }
+          } catch(e) {}
+          document.getElementById(`vload_${i}`)?.classList.add("gone");
+        }
+      };
+      requestAnimationFrame(tryFit);
     });
 
     const ifcLoader = components.get(IfcLoader);
@@ -142262,17 +142310,16 @@ async function crearViewer(i, item) {
     const buffer = new Uint8Array(await resp.arrayBuffer());
     const model  = await ifcLoader.load(buffer, false, item.codigo);
 
-    // Fallback: si onItemSet no disparó, manejar el retorno directo
-    if (model && model.object) {
+    // Fallback si onItemSet no disparó
+    if (model && model.object && !world.scene.three.getObjectById(model.object.id)) {
       model.useCamera(world.camera.three);
-      if (!world.scene.three.getObjectById(model.object.id)) {
-        world.scene.three.add(model.object);
-        fragments.core.update(true);
-        requestAnimationFrame(() => {
-          fitCamera(model.object, world);
-          document.getElementById(`vload_${i}`)?.classList.add("gone");
-        });
-      }
+      world.scene.three.add(model.object);
+      fragments.core.update(true);
+      requestAnimationFrame(() => {
+        const bbox = getModelBBox(model);
+        if (!bbox.isEmpty()) fitCamera(bbox, world);
+        document.getElementById(`vload_${i}`)?.classList.add("gone");
+      });
     }
 
   } catch(err) {
@@ -142283,39 +142330,19 @@ async function crearViewer(i, item) {
   }
 }
 
-// Ajustar cámara usando _bbox del modelo fragments (más fiable que Box3.setFromObject)
-function fitCamera(object, world) {
-  // Intentar con _bbox del modelo fragments si existe
-  const model = object?.parent;
-  const fragBbox = model?._bbox || model?.boundingBox;
-
-  let center, dist;
-
-  if (fragBbox && !fragBbox.isEmpty?.()) {
-    center = fragBbox.getCenter(new Vector3());
-    const size = fragBbox.getSize(new Vector3());
-    dist = Math.max(size.x, size.y, size.z) * 1.8;
-  } else {
-    // Fallback: calcular desde la geometría
-    const bbox = new Box3().setFromObject(object);
-    if (bbox.isEmpty()) {
-      // Posición por defecto si no hay geometría visible aún
-      world.camera.three.position.set(10, 10, 10);
-      world.camera.three.lookAt(0, 0, 0);
-      return;
-    }
-    center = bbox.getCenter(new Vector3());
-    const size = bbox.getSize(new Vector3());
-    dist = Math.max(size.x, size.y, size.z) * 1.8;
-  }
-
+function fitCamera(bbox, world) {
+  if (!bbox || bbox.isEmpty()) return;
+  const center = bbox.getCenter(new Vector3());
+  const size   = bbox.getSize(new Vector3());
+  const dist   = Math.max(size.x, size.y, size.z) * 1.5;
   if (world.camera.controls) {
     world.camera.controls.setLookAt(
-      center.x + dist, center.y + dist * 0.7, center.z + dist,
-      center.x, center.y, center.z
+      center.x + dist, center.y + dist * 0.6, center.z + dist,
+      center.x, center.y, center.z,
+      true  // animate
     );
   } else {
-    world.camera.three.position.set(center.x + dist, center.y + dist * 0.7, center.z + dist);
+    world.camera.three.position.set(center.x + dist, center.y + dist * 0.6, center.z + dist);
     world.camera.three.lookAt(center);
   }
 }
