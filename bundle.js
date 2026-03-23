@@ -142212,7 +142212,6 @@ async function crearViewer(i, item) {
   const H = container.clientHeight || 240;
 
   try {
-    // ── Setup components ──────────────────────────────────────────────────
     const components = new Components();
     const worlds = components.get(Worlds);
     const world  = worlds.create();
@@ -142234,75 +142233,46 @@ async function crearViewer(i, item) {
     components.init();
     viewers[`v_${i}`] = { components };
 
-    // ── FragmentsManager ──────────────────────────────────────────────────
     const fragments = components.get(FragmentsManager);
     fragments.init(workerBlobUrl);
 
-    // ── Ajuste de cámara cuando el modelo esté en escena ─────────────────
+    // Escuchar cuando el modelo esté listo en la escena
     fragments.list.onItemSet.add(({ value: model }) => {
-      console.log(`[${i}] Modelo cargado:`, model);
       model.useCamera(world.camera.three);
       world.scene.three.add(model.object);
 
-      // Forzar render para que el bounding box sea correcto
-      world.renderer.three.render(world.scene.three, world.camera.three);
+      // Actualizar el sistema de fragments para forzar visibilidad y tiles
+      fragments.core.update(true);
 
-      const bbox = new Box3().setFromObject(model.object);
-      console.log(`[${i}] BBox:`, bbox);
-
-      if (!bbox.isEmpty()) {
-        const center = bbox.getCenter(new Vector3());
-        const size   = bbox.getSize(new Vector3());
-        const dist   = Math.max(size.x, size.y, size.z) * 1.8;
-        if (world.camera.controls) {
-          world.camera.controls.setLookAt(
-            center.x + dist, center.y + dist * 0.7, center.z + dist,
-            center.x, center.y, center.z
-          );
-        }
-      }
-      document.getElementById(`vload_${i}`)?.classList.add("gone");
+      // Esperar un frame para que el bounding box esté calculado
+      requestAnimationFrame(() => {
+        fitCamera(model.object, world);
+        document.getElementById(`vload_${i}`)?.classList.add("gone");
+      });
     });
 
-    // ── IfcLoader ─────────────────────────────────────────────────────────
     const ifcLoader = components.get(IfcLoader);
     await ifcLoader.setup({
       autoSetWasm: false,
       wasm: { path: WASM_PATH, absolute: true },
     });
 
-    // ── Cargar IFC ────────────────────────────────────────────────────────
     const resp = await fetch(item.ifc_path);
-    if (!resp.ok) throw new Error(`HTTP ${resp.status} → ${item.ifc_path}`);
+    if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
     const buffer = new Uint8Array(await resp.arrayBuffer());
+    const model  = await ifcLoader.load(buffer, false, item.codigo);
 
-    console.log(`[${i}] Cargando ${item.ifc_path} (${buffer.length} bytes)`);
-
-    // Firma oficial: load(data, coordinate, modelId)
-    const model = await ifcLoader.load(buffer, false, item.codigo);
-
-    console.log(`[${i}] ifcLoader.load() retornó:`, model);
-
-    // Si load() retorna el modelo directamente (algunas versiones)
-    // lo añadimos manualmente por si onItemSet no se disparó
+    // Fallback: si onItemSet no disparó, manejar el retorno directo
     if (model && model.object) {
       model.useCamera(world.camera.three);
       if (!world.scene.three.getObjectById(model.object.id)) {
         world.scene.three.add(model.object);
+        fragments.core.update(true);
+        requestAnimationFrame(() => {
+          fitCamera(model.object, world);
+          document.getElementById(`vload_${i}`)?.classList.add("gone");
+        });
       }
-      const bbox = new Box3().setFromObject(model.object);
-      if (!bbox.isEmpty()) {
-        const center = bbox.getCenter(new Vector3());
-        const size   = bbox.getSize(new Vector3());
-        const dist   = Math.max(size.x, size.y, size.z) * 1.8;
-        if (world.camera.controls) {
-          world.camera.controls.setLookAt(
-            center.x + dist, center.y + dist * 0.7, center.z + dist,
-            center.x, center.y, center.z
-          );
-        }
-      }
-      document.getElementById(`vload_${i}`)?.classList.add("gone");
     }
 
   } catch(err) {
@@ -142310,6 +142280,43 @@ async function crearViewer(i, item) {
     try { viewers[`v_${i}`]?.components.dispose(); } catch(e) {}
     delete viewers[`v_${i}`];
     mostrarPlaceholder(i, item.ifc_type);
+  }
+}
+
+// Ajustar cámara usando _bbox del modelo fragments (más fiable que Box3.setFromObject)
+function fitCamera(object, world) {
+  // Intentar con _bbox del modelo fragments si existe
+  const model = object?.parent;
+  const fragBbox = model?._bbox || model?.boundingBox;
+
+  let center, dist;
+
+  if (fragBbox && !fragBbox.isEmpty?.()) {
+    center = fragBbox.getCenter(new Vector3());
+    const size = fragBbox.getSize(new Vector3());
+    dist = Math.max(size.x, size.y, size.z) * 1.8;
+  } else {
+    // Fallback: calcular desde la geometría
+    const bbox = new Box3().setFromObject(object);
+    if (bbox.isEmpty()) {
+      // Posición por defecto si no hay geometría visible aún
+      world.camera.three.position.set(10, 10, 10);
+      world.camera.three.lookAt(0, 0, 0);
+      return;
+    }
+    center = bbox.getCenter(new Vector3());
+    const size = bbox.getSize(new Vector3());
+    dist = Math.max(size.x, size.y, size.z) * 1.8;
+  }
+
+  if (world.camera.controls) {
+    world.camera.controls.setLookAt(
+      center.x + dist, center.y + dist * 0.7, center.z + dist,
+      center.x, center.y, center.z
+    );
+  } else {
+    world.camera.three.position.set(center.x + dist, center.y + dist * 0.7, center.z + dist);
+    world.camera.three.lookAt(center);
   }
 }
 
