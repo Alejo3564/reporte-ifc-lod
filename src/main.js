@@ -1,7 +1,6 @@
 import * as THREE from "three";
 import * as OBC  from "@thatopen/components";
 
-// Versión exacta de WASM según docs oficiales de @thatopen/components 3.3
 const WASM_PATH  = "https://unpkg.com/web-ifc@0.0.74/";
 const WORKER_URL = "https://thatopen.github.io/engine_fragment/resources/worker.mjs";
 
@@ -20,11 +19,11 @@ const FILTROS = [
 ];
 
 async function iniciar() {
-  // Worker como blob — UNA sola vez
   const resp = await fetch(WORKER_URL);
   const blob = await resp.blob();
-  workerBlobUrl = URL.createObjectURL(new File([blob], "worker.mjs", { type: "text/javascript" }));
-
+  workerBlobUrl = URL.createObjectURL(
+    new File([blob], "worker.mjs", { type: "text/javascript" })
+  );
   const r = await fetch("./data/datos.json?v=" + Date.now());
   datos = await r.json();
   iniciarFiltros();
@@ -134,6 +133,7 @@ async function crearViewer(i, item) {
   const H = container.clientHeight || 240;
 
   try {
+    // ── Setup components ──────────────────────────────────────────────────
     const components = new OBC.Components();
     const worlds = components.get(OBC.Worlds);
     const world  = worlds.create();
@@ -155,15 +155,22 @@ async function crearViewer(i, item) {
     components.init();
     viewers[`v_${i}`] = { components };
 
-    // FragmentsManager — init obligatorio antes de IfcLoader
+    // ── FragmentsManager ──────────────────────────────────────────────────
     const fragments = components.get(OBC.FragmentsManager);
     fragments.init(workerBlobUrl);
 
-    // Ajuste de cámara cuando el modelo se agrega
+    // ── Ajuste de cámara cuando el modelo esté en escena ─────────────────
     fragments.list.onItemSet.add(({ value: model }) => {
+      console.log(`[${i}] Modelo cargado:`, model);
       model.useCamera(world.camera.three);
       world.scene.three.add(model.object);
+
+      // Forzar render para que el bounding box sea correcto
+      world.renderer.three.render(world.scene.three, world.camera.three);
+
       const bbox = new THREE.Box3().setFromObject(model.object);
+      console.log(`[${i}] BBox:`, bbox);
+
       if (!bbox.isEmpty()) {
         const center = bbox.getCenter(new THREE.Vector3());
         const size   = bbox.getSize(new THREE.Vector3());
@@ -178,20 +185,46 @@ async function crearViewer(i, item) {
       document.getElementById(`vload_${i}`)?.classList.add("gone");
     });
 
-    // IfcLoader con WASM @0.0.74 (versión docs oficiales)
+    // ── IfcLoader ─────────────────────────────────────────────────────────
     const ifcLoader = components.get(OBC.IfcLoader);
     await ifcLoader.setup({
       autoSetWasm: false,
       wasm: { path: WASM_PATH, absolute: true },
     });
 
-    // Cargar IFC — firma correcta según docs: load(buffer, isCoordinated, modelId, options)
+    // ── Cargar IFC ────────────────────────────────────────────────────────
     const resp = await fetch(item.ifc_path);
-    if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
-    const data   = await resp.arrayBuffer();
-    const buffer = new Uint8Array(data);
+    if (!resp.ok) throw new Error(`HTTP ${resp.status} → ${item.ifc_path}`);
+    const buffer = new Uint8Array(await resp.arrayBuffer());
 
-    await ifcLoader.load(buffer, false, item.codigo);
+    console.log(`[${i}] Cargando ${item.ifc_path} (${buffer.length} bytes)`);
+
+    // Firma oficial: load(data, coordinate, modelId)
+    const model = await ifcLoader.load(buffer, false, item.codigo);
+
+    console.log(`[${i}] ifcLoader.load() retornó:`, model);
+
+    // Si load() retorna el modelo directamente (algunas versiones)
+    // lo añadimos manualmente por si onItemSet no se disparó
+    if (model && model.object) {
+      model.useCamera(world.camera.three);
+      if (!world.scene.three.getObjectById(model.object.id)) {
+        world.scene.three.add(model.object);
+      }
+      const bbox = new THREE.Box3().setFromObject(model.object);
+      if (!bbox.isEmpty()) {
+        const center = bbox.getCenter(new THREE.Vector3());
+        const size   = bbox.getSize(new THREE.Vector3());
+        const dist   = Math.max(size.x, size.y, size.z) * 1.8;
+        if (world.camera.controls) {
+          world.camera.controls.setLookAt(
+            center.x + dist, center.y + dist * 0.7, center.z + dist,
+            center.x, center.y, center.z
+          );
+        }
+      }
+      document.getElementById(`vload_${i}`)?.classList.add("gone");
+    }
 
   } catch(err) {
     console.warn(`IFC error [${item.ifc_path}]:`, err.message || err);
