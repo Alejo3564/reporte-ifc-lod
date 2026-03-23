@@ -98,7 +98,7 @@
     "ifc_path": "models/IfcCourse.FILTER.ifc",
     "link": "https://identifier.buildingsmart.org/uri/buildingsmart/ifc/4.3/class/IfcCourseFILTER"
   },
-    {
+  {
     "codigo": "H.01.01.01",
     "elemento": "Axis",
     "ifc_type": "IfcAlignment",
@@ -106,5 +106,14 @@
     "lod": "200",
     "ifc_path": "models/IfcAlignment.ifc",
     "link": "https://identifier.buildingsmart.org/uri/buildingsmart/ifc/4.3/class/IfcAlignment"
+  },
+    {
+    "codigo": "A.04.04.03",
+    "elemento": "Select fill material",
+    "ifc_type": "IfcEarthworksFill.SUBGRADE",
+    "descripcion": "Rellenos",
+    "lod": "200",
+    "ifc_path": "models/IfcEarthworksFill.SUBGRADE.ifc",
+    "link": "https://identifier.buildingsmart.org/uri/buildingsmart/ifc/4.3/class/IfcEarthworksFillSUBGRADE"
   }
 ]
