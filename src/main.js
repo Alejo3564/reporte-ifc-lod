@@ -119,13 +119,30 @@ function processQueue() {
   }
 }
 
+// Calcula bbox forzando actualización de matrices — robusto para fragments
+function calcBBox(object) {
+  const bbox = new THREE.Box3();
+  // Forzar actualización de todas las matrices del árbol
+  object.updateWorldMatrix(true, true);
+  object.traverse(child => {
+    if (!child.isMesh || !child.geometry) return;
+    try {
+      const pos = child.geometry.attributes.position;
+      if (!pos || pos.count === 0) return;
+      // Usar expandByObject que es más robusto que computeBoundingBox manual
+      const childBBox = new THREE.Box3().setFromObject(child);
+      if (!childBBox.isEmpty()) bbox.union(childBBox);
+    } catch(e) {}
+  });
+  return bbox;
+}
+
 function fitCamera(bbox, world) {
   if (!bbox || bbox.isEmpty()) return false;
   const center = bbox.getCenter(new THREE.Vector3());
   const size   = bbox.getSize(new THREE.Vector3());
   const maxDim = Math.max(size.x, size.y, size.z);
   if (maxDim === 0) return false;
-  // Factor de zoom: más cerca para objetos pequeños, más lejos para grandes
   const dist = maxDim * 1.5;
   if (world.camera.controls) {
     world.camera.controls.setLookAt(
@@ -140,56 +157,19 @@ function fitCamera(bbox, world) {
   return true;
 }
 
-// Usar OBC.BoundingBoxer — el método oficial que maneja coordenadas reales y unidades
-function fitConBoundingBoxer(components, model, world, i) {
-  let fitted = false;
-  try {
-    const boxer = components.get(OBC.BoundingBoxer);
-    boxer.reset();
-    boxer.add(model);
-    const sphere = boxer.getSphere();
-    if (sphere && sphere.radius > 0) {
-      const dist = sphere.radius * 2;
-      const c = sphere.center;
-      if (world.camera.controls) {
-        world.camera.controls.setLookAt(
-          c.x + dist, c.y + dist * 0.6, c.z + dist,
-          c.x, c.y, c.z,
-          true
-        );
-      }
-      fitted = true;
-    } else {
-      // Fallback: bbox del mesh
-      const mesh = boxer.getMesh();
-      mesh.geometry.computeBoundingBox();
-      const bb = mesh.geometry.boundingBox;
-      if (bb && !bb.isEmpty()) {
-        fitted = fitCamera(bb, world);
-      }
-    }
-    boxer.reset();
-  } catch(e) {
-    console.warn("BoundingBoxer error:", e.message);
+function ajustarCamara(modelObj, world, i, intento = 0) {
+  const MAX = 60; // ~1 segundo de reintentos
+  const bbox = calcBBox(modelObj);
+  if (!bbox.isEmpty() && fitCamera(bbox, world)) {
+    document.getElementById(`vload_${i}`)?.classList.add("gone");
+    return;
   }
-
-  if (!fitted) {
-    // Último recurso: traverse manual
-    model.object.updateWorldMatrix(true, true);
-    const bbox = new THREE.Box3();
-    model.object.traverse(child => {
-      if (!child.isMesh || !child.geometry) return;
-      try {
-        const pos = child.geometry.attributes.position;
-        if (!pos || pos.count === 0) return;
-        const cb = new THREE.Box3().setFromObject(child);
-        if (!cb.isEmpty()) bbox.union(cb);
-      } catch(e) {}
-    });
-    fitCamera(bbox, world);
+  if (intento < MAX) {
+    requestAnimationFrame(() => ajustarCamara(modelObj, world, i, intento + 1));
+  } else {
+    // Timeout — mostrar igual aunque no haya podido centrar
+    document.getElementById(`vload_${i}`)?.classList.add("gone");
   }
-
-  document.getElementById(`vload_${i}`)?.classList.add("gone");
 }
 
 async function crearViewer(i, item) {
@@ -227,10 +207,8 @@ async function crearViewer(i, item) {
       model.useCamera(world.camera.three);
       world.scene.three.add(model.object);
       fragments.core.update(true);
-      // Esperar que los tiles se rendericen antes de medir
-      setTimeout(() => {
-        fitConBoundingBoxer(components, model, world, i);
-      }, 300);
+      // Iniciar ajuste con reintentos
+      ajustarCamara(model.object, world, i);
     });
 
     const ifcLoader = components.get(OBC.IfcLoader);
@@ -244,13 +222,12 @@ async function crearViewer(i, item) {
     const buffer = new Uint8Array(await resp.arrayBuffer());
     const model  = await ifcLoader.load(buffer, false, item.codigo);
 
+    // Fallback si onItemSet no disparó
     if (model?.object && !world.scene.three.getObjectById(model.object.id)) {
       model.useCamera(world.camera.three);
       world.scene.three.add(model.object);
       fragments.core.update(true);
-      setTimeout(() => {
-        fitConBoundingBoxer(components, model, world, i);
-      }, 300);
+      ajustarCamara(model.object, world, i);
     }
 
   } catch(err) {
