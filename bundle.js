@@ -142022,8 +142022,8 @@ const _MeasurementUtils = class _MeasurementUtils extends Component {
  */
 __publicField(_MeasurementUtils, "uuid", "267ca032-672f-4cb0-afa9-d24e904f39d6");
 
-// WASM desde unpkg — versión exacta compatible con @thatopen/fragments@3.3.6
-const WASM_PATH  = "https://unpkg.com/web-ifc@0.0.68/";
+// Versión exacta de WASM según docs oficiales de @thatopen/components 3.3
+const WASM_PATH  = "https://unpkg.com/web-ifc@0.0.74/";
 const WORKER_URL = "https://thatopen.github.io/engine_fragment/resources/worker.mjs";
 
 let datos        = [];
@@ -142041,7 +142041,7 @@ const FILTROS = [
 ];
 
 async function iniciar() {
-  // Descargar worker como blob UNA SOLA VEZ
+  // Worker como blob — UNA sola vez
   const resp = await fetch(WORKER_URL);
   const blob = await resp.blob();
   workerBlobUrl = URL.createObjectURL(new File([blob], "worker.mjs", { type: "text/javascript" }));
@@ -142176,10 +142176,11 @@ async function crearViewer(i, item) {
     components.init();
     viewers[`v_${i}`] = { components };
 
-    // FragmentsManager con worker ya preparado
+    // FragmentsManager — init obligatorio antes de IfcLoader
     const fragments = components.get(FragmentsManager);
     fragments.init(workerBlobUrl);
 
+    // Ajuste de cámara cuando el modelo se agrega
     fragments.list.onItemSet.add(({ value: model }) => {
       model.useCamera(world.camera.three);
       world.scene.three.add(model.object);
@@ -142198,17 +142199,20 @@ async function crearViewer(i, item) {
       document.getElementById(`vload_${i}`)?.classList.add("gone");
     });
 
-    // IfcLoader con WASM desde unpkg (versión exacta compatible)
+    // IfcLoader con WASM @0.0.74 (versión docs oficiales)
     const ifcLoader = components.get(IfcLoader);
     await ifcLoader.setup({
       autoSetWasm: false,
       wasm: { path: WASM_PATH, absolute: true },
     });
 
+    // Cargar IFC — firma correcta según docs: load(buffer, isCoordinated, modelId, options)
     const resp = await fetch(item.ifc_path);
     if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
-    const buffer = new Uint8Array(await resp.arrayBuffer());
-    await ifcLoader.load(buffer);
+    const data   = await resp.arrayBuffer();
+    const buffer = new Uint8Array(data);
+
+    await ifcLoader.load(buffer, false, item.codigo);
 
   } catch(err) {
     console.warn(`IFC error [${item.ifc_path}]:`, err.message || err);
@@ -142222,7 +142226,6 @@ function mostrarPlaceholder(i, ifcType) {
   const vload = document.getElementById(`vload_${i}`);
   const box   = document.getElementById(`vbox_${i}`);
   if (!vload) return;
-
   let icon = `<circle cx="12" cy="12" r="8" stroke-width="1.2"/>`;
   if (/rail/i.test(ifcType))   icon = `<path d="M4 6h16M4 18h16M8 6v12M16 6v12" stroke-width="1.5"/>`;
   if (/sign$/i.test(ifcType))  icon = `<path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5" stroke-width="1.2"/>`;
@@ -142231,15 +142234,13 @@ function mostrarPlaceholder(i, ifcType) {
   if (/wall/i.test(ifcType))   icon = `<rect x="3" y="4" width="18" height="16" rx="1"/><line x1="3" y1="10" x2="21" y2="10"/><line x1="12" y1="4" x2="12" y2="20"/>`;
   if (/door/i.test(ifcType))   icon = `<rect x="4" y="2" width="12" height="20" rx="1"/><circle cx="14" cy="12" r="1.5"/>`;
   if (/geo/i.test(ifcType))    icon = `<path d="M3 17l4-8 4 5 3-3 4 6H3z"/><circle cx="17" cy="7" r="2"/>`;
-
   vload.innerHTML = `
-    <svg width="36" height="36" viewBox="0 0 24 24" fill="none"
-         stroke="#3b82f6" stroke-linecap="round" stroke-linejoin="round"
+    <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="#3b82f6"
+         stroke-linecap="round" stroke-linejoin="round"
          style="opacity:.5;margin-bottom:8px">${icon}</svg>
     <span style="color:#475569;font-size:9px;font-family:'IBM Plex Mono',monospace;
                  text-align:center;letter-spacing:.5px;line-height:1.6">
-      MODELO NO<br>DISPONIBLE
-    </span>`;
+      MODELO NO<br>DISPONIBLE</span>`;
   if (box) box.style.background = "#0d1120";
 }
 
