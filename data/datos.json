@@ -97,5 +97,14 @@
     "lod": "300",
     "ifc_path": "models/IfcCourse.FILTER.ifc",
     "link": "https://identifier.buildingsmart.org/uri/buildingsmart/ifc/4.3/class/IfcCourseFILTER"
+  },
+    {
+    "codigo": "H.01.01.01",
+    "elemento": "Axis",
+    "ifc_type": "IfcAlignment",
+    "descripcion": "Label",
+    "lod": "200",
+    "ifc_path": "models/IfcAlignment.ifc",
+    "link": "https://identifier.buildingsmart.org/uri/buildingsmart/ifc/4.3/class/IfcAlignment"
   }
 ]
